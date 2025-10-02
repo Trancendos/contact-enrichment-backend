@@ -7,15 +7,20 @@ from flask import Flask, send_from_directory
 from src.models.user import db
 from src.routes.user import user_bp
 from src.routes.enrichment import enrichment_bp
+from src.routes.auth import auth_bp
+from src.routes.suggestions import suggestions_bp
+from src.models.suggestion import Suggestion
 from flask_cors import CORS
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
-CORS(app) # Enable CORS for all routes
+CORS(app, supports_credentials=True) # Enable CORS for all routes with credentials
 
 app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(enrichment_bp, url_prefix='/api')
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app.register_blueprint(suggestions_bp, url_prefix='/api/suggestions')
 
 # uncomment if you need to use database
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
