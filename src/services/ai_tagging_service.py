@@ -1,10 +1,19 @@
 import os
 import json
-from openai import OpenAI
+
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    OpenAI = None
 
 class AITaggingService:
     def __init__(self):
-        self.client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        if OPENAI_AVAILABLE and OpenAI:
+            self.client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        else:
+            self.client = None
     
     def suggest_tags(self, contact_data):
         """
@@ -16,6 +25,10 @@ class AITaggingService:
         Returns:
             List of suggested tags
         """
+        if not self.client:
+            # Fallback to rule-based tagging if OpenAI is not available
+            return self._fallback_suggest_tags(contact_data)
+        
         try:
             # Extract relevant information from contact
             name = contact_data.get('fullName') or f"{contact_data.get('firstName', '')} {contact_data.get('lastName', '')}".strip()
@@ -97,3 +110,54 @@ Do not include tags that already exist."""
             if contact_id:
                 results[contact_id] = self.suggest_tags(contact)
         return results
+    
+    def _fallback_suggest_tags(self, contact_data):
+        """
+        Rule-based fallback tagging when AI is not available.
+        
+        Args:
+            contact_data: Dictionary containing contact information
+            
+        Returns:
+            List of suggested tags
+        """
+        tags = []
+        
+        # Check organization
+        org = contact_data.get('org', '').lower()
+        if org:
+            tags.append('work')
+            if any(word in org for word in ['corp', 'inc', 'llc', 'ltd', 'company']):
+                tags.append('business')
+        
+        # Check email domains
+        emails = [email.get('value', '') for email in contact_data.get('emails', [])]
+        for email in emails:
+            if '@' in email:
+                domain = email.split('@')[1].lower()
+                if domain in ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com']:
+                    if 'personal' not in tags:
+                        tags.append('personal')
+                else:
+                    if 'work' not in tags:
+                        tags.append('work')
+        
+        # Check title
+        title = contact_data.get('title', '').lower()
+        if title:
+            if any(word in title for word in ['ceo', 'cto', 'cfo', 'president', 'director', 'vp']):
+                tags.append('executive')
+            if any(word in title for word in ['manager', 'lead', 'head']):
+                tags.append('management')
+            if any(word in title for word in ['developer', 'engineer', 'programmer']):
+                tags.append('technical')
+        
+        # Check if contact has multiple phones/emails (might be important)
+        if len(contact_data.get('phones', [])) > 2 or len(emails) > 2:
+            tags.append('vip')
+        
+        # Remove duplicates and limit to 5 tags
+        existing_tags = [t.lower() for t in contact_data.get('tags', [])]
+        tags = [tag for tag in tags if tag not in existing_tags]
+        
+        return tags[:5]
