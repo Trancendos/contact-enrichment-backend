@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from flask_session import Session # Import Flask-Session
 
-# DON'T CHANGE THIS !!!
+# DON\'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, session, g
@@ -26,20 +26,20 @@ from src.routes.relationship import relationship_bp
 
 from flask_cors import CORS
 
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
-app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), \'static\'))
+app.config[\'SECRET_KEY\'] = \'asdf#FGSgvasgf$5$WGT\'
 
 # Configure Flask-Session
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = False
-app.config['SESSION_USE_SIGNER'] = True
-app.config['SESSION_FILE_DIR'] = os.path.join(os.path.dirname(__file__), 'flask_session_data')
+app.config[\'SESSION_TYPE\'] = \'filesystem\'
+app.config[\'SESSION_PERMANENT\'] = False
+app.config[\'SESSION_USE_SIGNER\'] = True
+app.config[\'SESSION_FILE_DIR\'] = os.path.join(os.path.dirname(__file__), \'flask_session_data\')
 Session(app) # Initialize Flask-Session
 
 CORS(app, supports_credentials=True) # Enable CORS for all routes with credentials
 
 # Database setup
-DATABASE_URL = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+DATABASE_URL = f"sqlite:///{os.path.join(os.path.dirname(__file__), \'database\', \'app.db\')}"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -60,36 +60,17 @@ def before_request():
 
 @app.after_request
 def after_request(response):
-    if hasattr(g, 'db'):
+    if hasattr(g, \'db\'):
         g.db.close()
     return response
 
-app.register_blueprint(user_bp, url_prefix='/api')
-app.register_blueprint(enrichment_bp, url_prefix='/api')
-app.register_blueprint(auth_bp, url_prefix='/api/auth')
-app.register_blueprint(suggestions_bp, url_prefix='/api/suggestions')
+app.register_blueprint(user_bp, url_prefix=\'/api\')
+app.register_blueprint(enrichment_bp, url_prefix=\'/api\')
+app.register_blueprint(auth_bp, url_prefix=\'/api/auth\')
+app.register_blueprint(suggestions_bp, url_prefix=\'/api/suggestions\')
 app.register_blueprint(tagging_bp)
 app.register_blueprint(history_bp)
 app.register_blueprint(contact_management_bp, url_prefix="/api")
 app.register_blueprint(relationship_bp, url_prefix="/api")
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    static_folder_path = app.static_folder
-    if static_folder_path is None:
-            return "Static folder not configured", 404
-
-    if path != "" and os.path.exists(os.path.join(static_folder_path, path)):
-        return send_from_directory(static_folder_path, path)
-    else:
-        index_path = os.path.join(static_folder_path, 'index.html')
-        if os.path.exists(index_path):
-            return send_from_directory(static_folder_path, 'index.html')
-        else:
-            return "index.html not found", 404
-
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
+@app.route(\'/\', defaults={\'path\': \'\'})
