@@ -1,27 +1,20 @@
 from functools import wraps
-from flask import request, jsonify, g, current_app
+from flask import request, jsonify, g, current_app, session
 from src.models.user import User
 
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            return jsonify({"success": False, "error": "Authorization header missing"}), 401
+        if not session.get("user_id"):
+            return jsonify({"success": False, "error": "Unauthorized"}), 401
 
         try:
-            token = auth_header.split(" ")[1]
-            
-            # Ensure g.db is available from the before_request hook
             if not hasattr(g, 'db') or g.db is None:
                 return jsonify({"success": False, "error": "Database session not available"}), 500
 
-            # In a real application, you would validate the token (e.g., JWT)
-            # For this example, we'll assume the token is the user's email for simplicity
-            # and fetch the user from the database.
-            user = g.db.query(User).filter_by(email=token).first()
+            user = g.db.query(User).filter_by(id=session["user_id"]).first()
             if not user:
-                return jsonify({"success": False, "error": "Invalid token or user not found"}), 401
+                return jsonify({"success": False, "error": "User not found"}), 401
             
             g.user_id = user.id
             g.user_email = user.email
