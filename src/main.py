@@ -10,7 +10,10 @@ from src.routes.enrichment import enrichment_bp
 from src.routes.auth import auth_bp
 from src.routes.suggestions import suggestions_bp
 from src.routes.tagging import tagging_bp
+from src.routes.history import history_bp
+from src.routes.contact_management import contact_management_bp
 from src.models.suggestion import Suggestion
+from src.models.contact_history import ContactHistory
 from flask_cors import CORS
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
@@ -23,6 +26,8 @@ app.register_blueprint(enrichment_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(suggestions_bp, url_prefix='/api/suggestions')
 app.register_blueprint(tagging_bp)
+app.register_blueprint(history_bp)
+app.register_blueprint(contact_management_bp, url_prefix="/api")
 
 # uncomment if you need to use database
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
