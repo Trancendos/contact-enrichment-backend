@@ -1,177 +1,283 @@
+from sqlalchemy.orm import Session
+from src.models.contact import Contact
+from src.models.contact_history import ContactHistory
+from src.models.contact_relationship import ContactRelationship
 from src.services.history_service import HistoryService
+from datetime import datetime
+import json
 
 class ContactManagementService:
-    """Service for managing contact modifications and logging history"""
-    
-    @staticmethod
-    def create_contact(user_id, contact_data, request=None):
-        """Create a new contact and log the action"""
-        # In a real application, this would save the contact to the database
-        # For now, we just log the action
-        
-        new_contact_id = contact_data.get("id", f"contact-{hash(str(contact_data))}")
-        
-        HistoryService.log_action(
-            user_id=user_id,
-            contact_id=new_contact_id,
-            action_type="create",
-            after_data=contact_data,
-            description=f"Created new contact: {contact_data.get('fullName', 'Unknown')}",
-            request=request
-        )
-        
-        return { "success": True, "contact_id": new_contact_id }
+    def __init__(self, db_session: Session, user_id: int):
+        self.db_session = db_session
+        self.user_id = user_id
+        self.history_service = HistoryService(db_session)
 
-    @staticmethod
-    def update_contact(user_id, contact_id, before_data, after_data, request=None):
-        """Update a contact and log the action"""
-        # In a real application, this would update the contact in the database
-        
-        HistoryService.log_action(
-            user_id=user_id,
+    def _log_history(self, contact_id, action, before_data, after_data, request_info=None):
+        self.history_service.log_history(
             contact_id=contact_id,
-            action_type="update",
-            before_data=before_data,
-            after_data=after_data,
-            description=f"Updated contact: {after_data.get('fullName', 'Unknown')}",
-            request=request
+            user_id=self.user_id,
+            action=action,
+            before_data=json.dumps(before_data, default=str),
+            after_data=json.dumps(after_data, default=str),
+            timestamp=datetime.now(),
+            request_info=json.dumps(request_info, default=str) if request_info else None
         )
-        
-        return { "success": True }
 
-    @staticmethod
-    def delete_contact(user_id, contact_id, contact_data, request=None):
-        """Delete a contact and log the action"""
-        # In a real application, this would delete the contact from the database
-        
-        HistoryService.log_action(
-            user_id=user_id,
-            contact_id=contact_id,
-            action_type="delete",
-            before_data=contact_data,
-            description=f"Deleted contact: {contact_data.get('fullName', 'Unknown')}",
-            request=request
+    def create_contact(self, contact_data: dict, request_info=None):
+        new_contact = Contact(
+            user_id=self.user_id,
+            full_name=contact_data.get("full_name"),
+            first_name=contact_data.get("first_name"),
+            last_name=contact_data.get("last_name"),
+            organization=contact_data.get("organization"),
+            title=contact_data.get("title"),
+            emails=contact_data.get("emails", []),
+            phones=contact_data.get("phones", []),
+            notes=contact_data.get("notes"),
+            tags=contact_data.get("tags", []),
+            related_names=contact_data.get("related_names", []),
+            explorium_data=contact_data.get("explorium_data"),
         )
-        
-        return { "success": True }
+        self.db_session.add(new_contact)
+        self.db_session.commit()
+        self.db_session.refresh(new_contact)
+        self._log_history(new_contact.id, "create", {}, new_contact.to_dict(), request_info)
+        return {"success": True, "contact": new_contact.to_dict()}
 
-    @staticmethod
-    def split_phone(user_id, original_contact, phone_to_split, request=None):
-        """Split a phone number into a new contact and log the actions"""
-        
-        # 1. Create the new contact
+    def update_contact(self, contact_id: int, updated_data: dict, request_info=None):
+        contact = self.db_session.query(Contact).filter_by(id=contact_id, user_id=self.user_id).first()
+        if not contact:
+            return {"success": False, "error": "Contact not found"}
+
+        before_data = contact.to_dict()
+
+        for key, value in updated_data.items():
+            if hasattr(contact, key):
+                setattr(contact, key, value)
+
+        self.db_session.commit()
+        self.db_session.refresh(contact)
+        self._log_history(contact.id, "update", before_data, contact.to_dict(), request_info)
+        return {"success": True, "contact": contact.to_dict()}
+
+    def delete_contact(self, contact_id: int, request_info=None):
+        contact = self.db_session.query(Contact).filter_by(id=contact_id, user_id=self.user_id).first()
+        if not contact:
+            return {"success": False, "error": "Contact not found"}
+
+        before_data = contact.to_dict()
+        self.db_session.delete(contact)
+        self.db_session.commit()
+        self._log_history(contact_id, "delete", before_data, {}, request_info)
+        return {"success": True, "message": "Contact deleted"}
+
+    def split_phone(self, original_contact_id: int, phone_to_split: dict, request_info=None):
+        original_contact = self.db_session.query(Contact).filter_by(id=original_contact_id, user_id=self.user_id).first()
+        if not original_contact:
+            return {"success": False, "error": "Original contact not found"}
+
+        before_original_data = original_contact.to_dict()
+
+        # Create new contact for the split phone
         new_contact_data = {
-            "id": f"contact-{hash(str(phone_to_split))}",
-            "fullName": "",
-            "firstName": "",
-            "lastName": "",
-            "emails": [{ "value": "", "type": "Home" }],
+            "full_name": original_contact.full_name,
+            "first_name": original_contact.first_name,
+            "last_name": original_contact.last_name,
+            "organization": original_contact.organization,
+            "title": original_contact.title,
+            "emails": [],
             "phones": [phone_to_split],
-            "organization": original_contact.get("organization", ""),
-            "title": original_contact.get("title", ""),
-            "note": f"Split from: {original_contact.get('fullName', 'Unknown')}",
-            "relatedNames": [],
-            "rawLines": []
+            "notes": f"Split from contact ID {original_contact.id}",
+            "tags": original_contact.tags,
+            "related_names": original_contact.related_names,
+            "explorium_data": original_contact.explorium_data,
         }
-        
-        ContactManagementService.create_contact(user_id, new_contact_data, request)
-        
-        # 2. Update the original contact
-        updated_original_data = {
-            **original_contact,
-            "phones": [p for p in original_contact.get("phones", []) if p["value"] != phone_to_split["value"]]
-        }
-        
-        ContactManagementService.update_contact(
-            user_id=user_id,
-            contact_id=original_contact["id"],
-            before_data=original_contact,
-            after_data=updated_original_data,
-            request=request
+        new_contact = Contact(
+            user_id=self.user_id,
+            **new_contact_data
         )
-        
-        return { "success": True, "new_contact": new_contact_data, "updated_original": updated_original_data }
+        self.db_session.add(new_contact)
+        self.db_session.flush() # To get new_contact.id
 
-    @staticmethod
-    def split_all(user_id, original_contact, request=None):
-        """Split a contact into multiple new contacts and log the actions"""
-        
+        # Remove phone from original contact
+        original_contact.phones = [p for p in original_contact.phones if p != phone_to_split]
+        self.db_session.commit()
+        self.db_session.refresh(original_contact)
+        self.db_session.refresh(new_contact)
+
+        self._log_history(original_contact.id, "split_phone_original", before_original_data, original_contact.to_dict(), request_info)
+        self._log_history(new_contact.id, "split_phone_new", {}, new_contact.to_dict(), request_info)
+
+        return {"success": True, "new_contact": new_contact.to_dict(), "updated_original": original_contact.to_dict()}
+
+    def split_all(self, original_contact_id: int, request_info=None):
+        original_contact = self.db_session.query(Contact).filter_by(id=original_contact_id, user_id=self.user_id).first()
+        if not original_contact:
+            return {"success": False, "error": "Original contact not found"}
+
+        before_original_data = original_contact.to_dict()
         new_contacts = []
-        
-        # 1. Create new contacts for each email
-        for email in original_contact.get("emails", []):
-            if email.get("value"):
+
+        # Split by emails
+        for email in original_contact.emails:
+            if email.get("value"): # Ensure email has a value
                 new_contact_data = {
-                    "id": f"contact-{hash(str(email))}",
-                    "fullName": "",
+                    "full_name": original_contact.full_name,
+                    "first_name": original_contact.first_name,
+                    "last_name": original_contact.last_name,
+                    "organization": original_contact.organization,
+                    "title": original_contact.title,
                     "emails": [email],
                     "phones": [],
-                    "note": f"Split from: {original_contact.get('fullName', 'Unknown')}"
+                    "notes": f"Split from contact ID {original_contact.id} (email)",
+                    "tags": original_contact.tags,
+                    "related_names": original_contact.related_names,
+                    "explorium_data": original_contact.explorium_data,
                 }
-                ContactManagementService.create_contact(user_id, new_contact_data, request)
-                new_contacts.append(new_contact_data)
-        
-        # 2. Create new contacts for each phone
-        for phone in original_contact.get("phones", []):
-            if phone.get("value"):
+                new_contact = Contact(user_id=self.user_id, **new_contact_data)
+                self.db_session.add(new_contact)
+                new_contacts.append(new_contact)
+
+        # Split by phones
+        for phone in original_contact.phones:
+            if phone.get("value"): # Ensure phone has a value
                 new_contact_data = {
-                    "id": f"contact-{hash(str(phone))}",
-                    "fullName": "",
+                    "full_name": original_contact.full_name,
+                    "first_name": original_contact.first_name,
+                    "last_name": original_contact.last_name,
+                    "organization": original_contact.organization,
+                    "title": original_contact.title,
                     "emails": [],
                     "phones": [phone],
-                    "note": f"Split from: {original_contact.get('fullName', 'Unknown')}"
+                    "notes": f"Split from contact ID {original_contact.id} (phone)",
+                    "tags": original_contact.tags,
+                    "related_names": original_contact.related_names,
+                    "explorium_data": original_contact.explorium_data,
                 }
-                ContactManagementService.create_contact(user_id, new_contact_data, request)
-                new_contacts.append(new_contact_data)
-        
-        # 3. Delete the original contact
-        ContactManagementService.delete_contact(user_id, original_contact["id"], original_contact, request)
-        
-        return { "success": True, "new_contacts": new_contacts }
+                new_contact = Contact(user_id=self.user_id, **new_contact_data)
+                self.db_session.add(new_contact)
+                new_contacts.append(new_contact)
 
-    @staticmethod
-    def merge_contacts(user_id, contacts_to_merge, request=None):
-        """Merge multiple contacts into one and log the actions"""
-        
+        self.db_session.delete(original_contact)
+        self.db_session.commit()
+
+        for nc in new_contacts:
+            self.db_session.refresh(nc)
+            self._log_history(nc.id, "split_all_new", {}, nc.to_dict(), request_info)
+        self._log_history(original_contact.id, "split_all_original_deleted", before_original_data, {}, request_info)
+
+        return {"success": True, "new_contacts": [nc.to_dict() for nc in new_contacts]}
+
+    def merge_contacts(self, contact_ids: list[int], request_info=None):
+        contacts_to_merge = self.db_session.query(Contact).filter(Contact.id.in_(contact_ids), Contact.user_id == self.user_id).all()
         if not contacts_to_merge or len(contacts_to_merge) < 2:
-            return { "success": False, "error": "At least two contacts are required for merging" }
-        
-        # 1. Create the merged contact
-        merged_contact_data = {
-            "id": contacts_to_merge[0]["id"],
-            "fullName": next((c["fullName"] for c in contacts_to_merge if c.get("fullName")), ""),
-            "emails": [],
-            "phones": [],
-            "note": " | ".join(filter(None, (c.get("note") for c in contacts_to_merge)))
-        }
-        
-        # Collect unique emails and phones
-        email_set = set()
-        phone_set = set()
-        for contact in contacts_to_merge:
-            for email in contact.get("emails", []):
-                if email.get("value") and email["value"] not in email_set:
-                    merged_contact_data["emails"].append(email)
-                    email_set.add(email["value"])
-            for phone in contact.get("phones", []):
-                if phone.get("value") and phone["value"] not in phone_set:
-                    merged_contact_data["phones"].append(phone)
-                    phone_set.add(phone["value"])
-        
-        # 2. Log the merge action
-        HistoryService.log_action(
-            user_id=user_id,
-            contact_id=merged_contact_data["id"],
-            action_type="merge",
-            before_data={ "merged_from": [c["id"] for c in contacts_to_merge] },
-            after_data=merged_contact_data,
-            description=f"Merged {len(contacts_to_merge)} contacts",
-            request=request
+            return {"success": False, "error": "At least two contacts are required for merging"}
+
+        # Choose the first contact as the primary contact to merge into
+        primary_contact = contacts_to_merge[0]
+        other_contacts = contacts_to_merge[1:]
+
+        before_primary_data = primary_contact.to_dict()
+
+        # Merge fields (simple concatenation for now, can be made smarter)
+        for other_contact in other_contacts:
+            primary_contact.emails.extend([e for e in other_contact.emails if e not in primary_contact.emails])
+            primary_contact.phones.extend([p for p in other_contact.phones if p not in primary_contact.phones])
+            primary_contact.tags.extend([t for t in other_contact.tags if t not in primary_contact.tags])
+            primary_contact.notes = (primary_contact.notes or "") + (f"\nMerged from contact ID {other_contact.id}: {other_contact.notes}" if other_contact.notes else "")
+            # You might want to merge other fields like full_name, organization, etc., with more sophisticated logic
+
+        self.db_session.commit()
+        self.db_session.refresh(primary_contact)
+
+        self._log_history(primary_contact.id, "merge_primary", before_primary_data, primary_contact.to_dict(), request_info)
+        for other_contact in other_contacts:
+            self._log_history(other_contact.id, "merge_deleted", other_contact.to_dict(), {}, request_info)
+            self.db_session.delete(other_contact)
+        self.db_session.commit()
+
+        return {"success": True, "merged_contact": primary_contact.to_dict()}
+
+    def add_relationship(self, contact_id_1: int, contact_id_2: int, relationship_type: str, request_info=None):
+        if contact_id_1 == contact_id_2:
+            return {"success": False, "error": "Cannot create a relationship with self"}
+
+        contact1 = self.db_session.query(Contact).filter_by(id=contact_id_1, user_id=self.user_id).first()
+        contact2 = self.db_session.query(Contact).filter_by(id=contact_id_2, user_id=self.user_id).first()
+
+        if not contact1 or not contact2:
+            return {"success": False, "error": "One or both contacts not found"}
+
+        # Check if relationship already exists (in either direction)
+        existing_rel = self.db_session.query(ContactRelationship).filter(
+            ((ContactRelationship.contact_id_1 == contact_id_1) & (ContactRelationship.contact_id_2 == contact_id_2)) |
+            ((ContactRelationship.contact_id_1 == contact_id_2) & (ContactRelationship.contact_id_2 == contact_id_1))
+        ).first()
+
+        if existing_rel:
+            return {"success": False, "error": "Relationship already exists"}
+
+        new_relationship = ContactRelationship(
+            contact_id_1=contact_id_1,
+            contact_id_2=contact_id_2,
+            relationship_type=relationship_type,
+            user_id=self.user_id
         )
+        self.db_session.add(new_relationship)
+        self.db_session.commit()
+        self.db_session.refresh(new_relationship)
+
+        self._log_history(contact_id_1, "add_relationship", {}, new_relationship.to_dict(), request_info)
+        self._log_history(contact_id_2, "add_relationship", {}, new_relationship.to_dict(), request_info)
+
+        return {"success": True, "relationship": new_relationship.to_dict()}
+
+    def remove_relationship(self, relationship_id: int, request_info=None):
+        relationship = self.db_session.query(ContactRelationship).filter_by(id=relationship_id, user_id=self.user_id).first()
+        if not relationship:
+            return {"success": False, "error": "Relationship not found"}
+
+        before_data = relationship.to_dict()
+        self.db_session.delete(relationship)
+        self.db_session.commit()
+
+        self._log_history(relationship.contact_id_1, "remove_relationship", before_data, {}, request_info)
+        self._log_history(relationship.contact_id_2, "remove_relationship", before_data, {}, request_info)
+
+        return {"success": True, "message": "Relationship removed"}
+
+    def get_relationships_for_contact(self, contact_id: int):
+        relationships = self.db_session.query(ContactRelationship).filter(
+            ((ContactRelationship.contact_id_1 == contact_id) | (ContactRelationship.contact_id_2 == contact_id)) &
+            (ContactRelationship.user_id == self.user_id)
+        ).all()
         
-        # 3. Delete the other contacts
-        for contact in contacts_to_merge[1:]:
-            ContactManagementService.delete_contact(user_id, contact["id"], contact, request)
-        
-        return { "success": True, "merged_contact": merged_contact_data }
+        result = []
+        for rel in relationships:
+            related_contact_id = rel.contact_id_1 if rel.contact_id_2 == contact_id else rel.contact_id_2
+            related_contact = self.db_session.query(Contact).filter_by(id=related_contact_id).first()
+            result.append({
+                "id": rel.id,
+                "contact_id_1": rel.contact_id_1,
+                "contact_id_2": rel.contact_id_2,
+                "relationship_type": rel.relationship_type,
+                "related_contact_name": related_contact.full_name if related_contact else "Unknown Contact"
+            })
+        return result
+
+    def get_all_relationships(self):
+        relationships = self.db_session.query(ContactRelationship).filter_by(user_id=self.user_id).all()
+        result = []
+        for rel in relationships:
+            contact1 = self.db_session.query(Contact).filter_by(id=rel.contact_id_1).first()
+            contact2 = self.db_session.query(Contact).filter_by(id=rel.contact_id_2).first()
+            result.append({
+                "id": rel.id,
+                "contact_id_1": rel.contact_id_1,
+                "contact_id_2": rel.contact_id_2,
+                "relationship_type": rel.relationship_type,
+                "contact_1_name": contact1.full_name if contact1 else "Unknown Contact",
+                "contact_2_name": contact2.full_name if contact2 else "Unknown Contact"
+            })
+        return result
 

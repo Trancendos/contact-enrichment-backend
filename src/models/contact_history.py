@@ -1,30 +1,27 @@
-from datetime import datetime
-from src.models.user import db
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from .base import Base
 
-class ContactHistory(db.Model):
-    """Model for tracking contact change history"""
+class ContactHistory(Base):
     __tablename__ = 'contact_history'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    contact_id = db.Column(db.String(100), nullable=False)  # UUID of the contact
-    action_type = db.Column(db.String(50), nullable=False)  # 'create', 'update', 'delete', 'split', 'merge'
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    
-    # Store the contact data before the change (for undo functionality)
-    before_data = db.Column(db.Text)  # JSON string
-    
-    # Store the contact data after the change
-    after_data = db.Column(db.Text)  # JSON string
-    
-    # Additional metadata
-    description = db.Column(db.String(500))  # Human-readable description of the change
-    ip_address = db.Column(db.String(50))
-    user_agent = db.Column(db.String(500))
-    
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    contact_id = Column(String, nullable=False)  # UUID of the contact
+    action_type = Column(String(50), nullable=False)
+    timestamp = Column(DateTime, server_default=func.now(), nullable=False)
+    before_data = Column(Text, nullable=True)  # JSON string
+    after_data = Column(Text, nullable=True)  # JSON string
+    description = Column(String(500), nullable=True)
+    ip_address = Column(String(50), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+
+    user = relationship('User', back_populates='contact_histories')
+
     def __repr__(self):
         return f'<ContactHistory {self.id}: {self.action_type} on {self.contact_id}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -36,3 +33,4 @@ class ContactHistory(db.Model):
             'before_data': self.before_data,
             'after_data': self.after_data
         }
+

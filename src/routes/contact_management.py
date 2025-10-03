@@ -1,75 +1,68 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, g
 from src.services.contact_management_service import ContactManagementService
+from src.middleware.auth_middleware import login_required
 
 contact_management_bp = Blueprint("contact_management", __name__)
 
 @contact_management_bp.route("/contacts", methods=["POST"])
+@login_required
 def create_contact():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
-    
+    user_id = g.user_id
     contact_data = request.get_json()
-    result = ContactManagementService.create_contact(user_id, contact_data, request)
+    service = ContactManagementService(g.db, user_id)
+    result = service.create_contact(contact_data, request)
     return jsonify(result)
 
 @contact_management_bp.route("/contacts/<contact_id>", methods=["PUT"])
+@login_required
 def update_contact(contact_id):
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
-    
+    user_id = g.user_id
     data = request.get_json()
-    before_data = data.get("before_data")
-    after_data = data.get("after_data")
+    updated_data = data.get("updated_data")
     
-    result = ContactManagementService.update_contact(user_id, contact_id, before_data, after_data, request)
+    service = ContactManagementService(g.db, user_id)
+    result = service.update_contact(contact_id, updated_data, request)
     return jsonify(result)
 
 @contact_management_bp.route("/contacts/<contact_id>", methods=["DELETE"])
+@login_required
 def delete_contact(contact_id):
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
-    
-    contact_data = request.get_json().get("contact_data")
-    result = ContactManagementService.delete_contact(user_id, contact_id, contact_data, request)
+    user_id = g.user_id
+    service = ContactManagementService(g.db, user_id)
+    result = service.delete_contact(contact_id, request)
     return jsonify(result)
 
 @contact_management_bp.route("/contacts/split_phone", methods=["POST"])
+@login_required
 def split_phone():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
-    
+    user_id = g.user_id
     data = request.get_json()
-    original_contact = data.get("original_contact")
+    original_contact_id = data.get("original_contact_id")
     phone_to_split = data.get("phone_to_split")
     
-    result = ContactManagementService.split_phone(user_id, original_contact, phone_to_split, request)
+    service = ContactManagementService(g.db, user_id)
+    result = service.split_phone(original_contact_id, phone_to_split, request)
     return jsonify(result)
 
 @contact_management_bp.route("/contacts/split_all", methods=["POST"])
+@login_required
 def split_all():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
-    
+    user_id = g.user_id
     data = request.get_json()
-    original_contact = data.get("original_contact")
+    original_contact_id = data.get("original_contact_id")
     
-    result = ContactManagementService.split_all(user_id, original_contact, request)
+    service = ContactManagementService(g.db, user_id)
+    result = service.split_all(original_contact_id, request)
     return jsonify(result)
 
 @contact_management_bp.route("/contacts/merge", methods=["POST"])
+@login_required
 def merge_contacts():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
-    
+    user_id = g.user_id
     data = request.get_json()
-    contacts_to_merge = data.get("contacts_to_merge")
+    contact_ids = data.get("contact_ids")
     
-    result = ContactManagementService.merge_contacts(user_id, contacts_to_merge, request)
+    service = ContactManagementService(g.db, user_id)
+    result = service.merge_contacts(contact_ids, request)
     return jsonify(result)
 

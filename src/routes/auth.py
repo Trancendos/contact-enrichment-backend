@@ -1,6 +1,6 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, g
 from werkzeug.security import generate_password_hash, check_password_hash
-from src.models.user import db, User
+from src.models.user import User
 import secrets
 
 auth_bp = Blueprint("auth", __name__)
@@ -18,7 +18,7 @@ def register():
         return jsonify({"error": "Email, password, and name are required"}), 400
 
     # Check if user already exists
-    existing_user = User.query.filter_by(email=email).first()
+    existing_user = g.db.query(User).filter_by(email=email).first()
     if existing_user:
         return jsonify({"error": "User with this email already exists"}), 400
 
@@ -26,8 +26,9 @@ def register():
     hashed_password = generate_password_hash(password)
     new_user = User(email=email, password=hashed_password, name=name)
     
-    db.session.add(new_user)
-    db.session.commit()
+    g.db.add(new_user)
+    g.db.commit()
+    g.db.refresh(new_user)
 
     # Automatically log in the user
     session["user_id"] = new_user.id
@@ -53,7 +54,7 @@ def login():
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
 
-    user = User.query.filter_by(email=email).first()
+    user = g.db.query(User).filter_by(email=email).first()
 
     if not user or not check_password_hash(user.password, password):
         return jsonify({"error": "Invalid email or password"}), 401
@@ -85,7 +86,7 @@ def get_current_user():
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
 
-    user = User.query.get(user_id)
+    user = g.db.query(User).filter(User.id == user_id).first()
     
     if not user:
         return jsonify({"error": "User not found"}), 404
@@ -126,3 +127,4 @@ def apple_oauth():
         "message": "Apple Sign-In not yet implemented. Use email/password login.",
         "note": "This requires Apple Sign-In configuration"
     })
+

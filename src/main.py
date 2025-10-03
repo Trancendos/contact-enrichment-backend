@@ -1,10 +1,19 @@
 import os
 import sys
-# DON'T CHANGE THIS !!!
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+# DON\'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, send_from_directory
-from src.models.user import db
+from flask import Flask, send_from_directory, session, g
+from src.models.base import Base
+from src.models.user import User
+from src.models.contact import Contact # Assuming Contact model exists or will be created
+from src.models.contact_history import ContactHistory
+from src.models.contact_relationship import ContactRelationship
+from src.models.suggestion import Suggestion
+
 from src.routes.user import user_bp
 from src.routes.enrichment import enrichment_bp
 from src.routes.auth import auth_bp
@@ -12,14 +21,40 @@ from src.routes.suggestions import suggestions_bp
 from src.routes.tagging import tagging_bp
 from src.routes.history import history_bp
 from src.routes.contact_management import contact_management_bp
-from src.models.suggestion import Suggestion
-from src.models.contact_history import ContactHistory
+from src.routes.relationship import relationship_bp
+
 from flask_cors import CORS
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
 CORS(app, supports_credentials=True) # Enable CORS for all routes with credentials
+
+# Database setup
+DATABASE_URL = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+
+# Dependency to get DB session
+def get_db():
+    db_session = SessionLocal()
+    try:
+        yield db_session
+    finally:
+        db_session.close()
+
+@app.before_request
+def before_request():
+    g.db = SessionLocal()
+
+@app.after_request
+def after_request(response):
+    if hasattr(g, 'db'):
+        g.db.close()
+    return response
 
 app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(enrichment_bp, url_prefix='/api')
@@ -28,13 +63,7 @@ app.register_blueprint(suggestions_bp, url_prefix='/api/suggestions')
 app.register_blueprint(tagging_bp)
 app.register_blueprint(history_bp)
 app.register_blueprint(contact_management_bp, url_prefix="/api")
-
-# uncomment if you need to use database
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
-with app.app_context():
-    db.create_all()
+app.register_blueprint(relationship_bp, url_prefix="/api")
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -55,3 +84,4 @@ def serve(path):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+

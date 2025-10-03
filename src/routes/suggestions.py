@@ -1,23 +1,24 @@
-from flask import Blueprint, request, jsonify, session
-from src.models.user import db
+from flask import Blueprint, request, jsonify, session, g
 from src.models.suggestion import Suggestion
+from src.models.contact import Contact
 from src.services.ai_predictor import predictor
 from src.services.nlu_service import nlu_service
-from src.services import explorium_service
+from src.services.explorium_service import ExploriumService
 import random
 
 suggestions_bp = Blueprint("suggestions", __name__)
 
-def generate_ai_suggestions(contacts, user_id):
+def generate_ai_suggestions(contacts, user_id, db_session):
     """Generate AI-powered suggestions for contacts using predictor, NLU, and Explorium data"""
     suggestions = []
-    
+    explorium_service_instance = ExploriumService(db_session, user_id)
+
     for contact in contacts:
         contact_id = contact.get("id")
         
         # 1. NLU Analysis of notes
-        if contact.get("note"):
-            analysis = nlu_service.analyze_note(contact["note"])
+        if contact.get("notes"):
+            analysis = nlu_service.analyze_note(contact["notes"])
             nlu_suggestions = nlu_service.generate_suggestions_from_analysis(contact, analysis)
             for nlu_sugg in nlu_suggestions:
                 suggestion = Suggestion(
@@ -33,12 +34,12 @@ def generate_ai_suggestions(contacts, user_id):
                 suggestions.append(suggestion)
         
         # 2. Explorium Enrichment and Suggestions
-        company_name = contact.get("org")
-        email = next((e.get("value") for e in contact.get("email", []) if e.get("value")), None)
-        full_name = contact.get("fn")
+        company_name = contact.get("organization")
+        email = next((e.get("value") for e in contact.get("emails", []) if e.get("value")), None)
+        full_name = contact.get("full_name")
 
         if company_name or email or full_name:
-            explorium_enriched_data = explorium_service.enrich_contact_with_explorium(contact)
+            explorium_enriched_data = explorium_service_instance.enrich_contact_with_explorium(contact)
             
             if explorium_enriched_data:
                 # Suggest updating company name if Explorium finds a more accurate one
@@ -48,7 +49,7 @@ def generate_ai_suggestions(contacts, user_id):
                     suggestions.append(Suggestion(
                         user_id=user_id,
                         contact_id=contact_id,
-                        field_name="org",
+                        field_name="organization",
                         current_value=company_name,
                         suggested_value=explorium_enriched_data["explorium_business_data"]["name"],
                         confidence=0.95,
@@ -97,16 +98,17 @@ def generate_ai_suggestions(contacts, user_id):
             ))
     
     # 4. Check for potential merges between contacts
-    for i, contact1 in enumerate(contacts):
-        for contact2 in contacts[i+1:]:
-            merge_probability = predictor.calculate_merge_probability(contact1, contact2)
+    all_contacts = db_session.query(Contact).filter(Contact.user_id == user_id).all()
+    for i, contact1 in enumerate(all_contacts):
+        for contact2 in all_contacts[i+1:]:
+            merge_probability = predictor.calculate_merge_probability(contact1.to_dict(), contact2.to_dict())
             if merge_probability > 0.5:
                 suggestions.append(Suggestion(
                     user_id=user_id,
-                    contact_id=contact1.get("id"),
+                    contact_id=contact1.id,
                     field_name="action",
-                    current_value=f"separate_contacts_{contact1.get('id')}_{contact2.get('id')}",
-                    suggested_value=f"merge_with_{contact2.get('fullName', 'Unknown')}",
+                    current_value=f"separate_contacts_{contact1.id}_{contact2.id}",
+                    suggested_value=f"merge_with_{contact2.full_name}",
                     confidence=merge_probability,
                     source="AI Predictor - Merge Analysis (Similar contact detected)",
                     status="pending"
@@ -129,16 +131,16 @@ def analyze_contacts():
         return jsonify({"error": "No contacts provided"}), 400
     
     # Clear existing pending suggestions for this user
-    Suggestion.query.filter_by(user_id=user_id, status="pending").delete()
+    g.db.query(Suggestion).filter_by(user_id=user_id, status="pending").delete()
     
     # Generate AI-powered suggestions
-    suggestions = generate_ai_suggestions(contacts, user_id)
+    suggestions = generate_ai_suggestions(contacts, user_id, g.db)
     
     # Save to database
     for suggestion in suggestions:
-        db.session.add(suggestion)
+        g.db.add(suggestion)
     
-    db.session.commit()
+    g.db.commit()
     
     return jsonify({
         "success": True,
@@ -156,7 +158,7 @@ def list_suggestions():
     
     status = request.args.get("status", "pending")
     
-    suggestions = Suggestion.query.filter_by(user_id=user_id, status=status).all()
+    suggestions = g.db.query(Suggestion).filter_by(user_id=user_id, status=status).all()
     
     return jsonify({
         "success": True,
@@ -171,7 +173,7 @@ def approve_suggestion(suggestion_id):
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
     
-    suggestion = Suggestion.query.filter_by(id=suggestion_id, user_id=user_id).first()
+    suggestion = g.db.query(Suggestion).filter_by(id=suggestion_id, user_id=user_id).first()
     
     if not suggestion:
         return jsonify({"error": "Suggestion not found"}), 404
@@ -184,7 +186,7 @@ def approve_suggestion(suggestion_id):
             predictor.learn_from_feedback("merge", {"confidence": suggestion.confidence}, approved=True)
     
     suggestion.status = "approved"
-    db.session.commit()
+    g.db.commit()
     
     return jsonify({
         "success": True,
@@ -200,7 +202,7 @@ def reject_suggestion(suggestion_id):
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
     
-    suggestion = Suggestion.query.filter_by(id=suggestion_id, user_id=user_id).first()
+    suggestion = g.db.query(Suggestion).filter_by(id=suggestion_id, user_id=user_id).first()
     
     if not suggestion:
         return jsonify({"error": "Suggestion not found"}), 404
@@ -213,7 +215,7 @@ def reject_suggestion(suggestion_id):
             predictor.learn_from_feedback("merge", {"confidence": suggestion.confidence}, approved=False)
     
     suggestion.status = "rejected"
-    db.session.commit()
+    g.db.commit()
     
     return jsonify({
         "success": True,
@@ -238,7 +240,7 @@ def bulk_action():
     
     status = "approved" if action == "approve" else "rejected"
     
-    suggestions = Suggestion.query.filter(
+    suggestions = g.db.query(Suggestion).filter(
         Suggestion.id.in_(suggestion_ids),
         Suggestion.user_id == user_id
     ).all()
@@ -246,7 +248,7 @@ def bulk_action():
     for suggestion in suggestions:
         suggestion.status = status
     
-    db.session.commit()
+    g.db.commit()
     
     return jsonify({
         "success": True,

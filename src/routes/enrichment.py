@@ -1,20 +1,27 @@
-from flask import Blueprint, request, jsonify
-from src.services.explorium_service import enrich_contact_with_explorium
+from flask import Blueprint, request, jsonify, g
+from src.services.explorium_service import ExploriumService
+from src.middleware.auth_middleware import login_required
 
 enrichment_bp = Blueprint("enrichment", __name__)
 
 @enrichment_bp.route("/enrich_contact", methods=["POST"])
+@login_required
 def enrich_contact():
+    user_id = g.user_id # Assuming user_id is set in g by login_required
     data = request.get_json()
     contact = data.get("contact")
 
     if not contact:
         return jsonify({"error": "Contact data is required for enrichment"}), 400
 
-    enriched_data = enrich_contact_with_explorium(contact)
+    try:
+        service = ExploriumService(g.db, user_id)
+        enriched_data = service.enrich_contact_with_explorium(contact)
 
-    if enriched_data.get("error"):
-        return jsonify({"error": "Failed to enrich contact", "details": enriched_data["error"]}), 500
+        if enriched_data.get("error"):
+            return jsonify({"error": "Failed to enrich contact", "details": enriched_data["error"]}), 500
 
-    return jsonify({"success": True, "enriched_data": enriched_data})
+        return jsonify({"success": True, "enriched_data": enriched_data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
