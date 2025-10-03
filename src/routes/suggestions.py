@@ -3,67 +3,114 @@ from src.models.user import db
 from src.models.suggestion import Suggestion
 from src.services.ai_predictor import predictor
 from src.services.nlu_service import nlu_service
+from src.services import explorium_service
 import random
 
 suggestions_bp = Blueprint("suggestions", __name__)
 
 def generate_ai_suggestions(contacts, user_id):
-    """Generate AI-powered suggestions for contacts using predictor and NLU"""
+    """Generate AI-powered suggestions for contacts using predictor, NLU, and Explorium data"""
     suggestions = []
     
-    # 1. Analyze each contact with NLU for note extraction
     for contact in contacts:
-        contact_id = contact.get('id')
+        contact_id = contact.get("id")
         
-        # NLU Analysis of notes
-        if contact.get('note'):
-            analysis = nlu_service.analyze_note(contact['note'])
+        # 1. NLU Analysis of notes
+        if contact.get("note"):
+            analysis = nlu_service.analyze_note(contact["note"])
             nlu_suggestions = nlu_service.generate_suggestions_from_analysis(contact, analysis)
-            
             for nlu_sugg in nlu_suggestions:
                 suggestion = Suggestion(
                     user_id=user_id,
                     contact_id=contact_id,
-                    field_name=nlu_sugg['field'],
-                    current_value=contact.get(nlu_sugg['field'], ''),
-                    suggested_value=nlu_sugg['value'],
-                    confidence=nlu_sugg['confidence'],
-                    source=nlu_sugg['source'],
-                    status='pending'
+                    field_name=nlu_sugg["field"],
+                    current_value=contact.get(nlu_sugg["field"], ""),
+                    suggested_value=nlu_sugg["value"],
+                    confidence=nlu_sugg["confidence"],
+                    source=nlu_sugg["source"],
+                    status="pending"
                 )
                 suggestions.append(suggestion)
         
-        # 2. Check if contact should be split
+        # 2. Explorium Enrichment and Suggestions
+        company_name = contact.get("org")
+        email = next((e.get("value") for e in contact.get("email", []) if e.get("value")), None)
+        full_name = contact.get("fn")
+
+        if company_name or email or full_name:
+            explorium_enriched_data = explorium_service.enrich_contact_with_explorium(contact)
+            
+            if explorium_enriched_data:
+                # Suggest updating company name if Explorium finds a more accurate one
+                if "explorium_business_data" in explorium_enriched_data and \
+                   explorium_enriched_data["explorium_business_data"].get("name") and \
+                   explorium_enriched_data["explorium_business_data"]["name"].lower() != company_name.lower():
+                    suggestions.append(Suggestion(
+                        user_id=user_id,
+                        contact_id=contact_id,
+                        field_name="org",
+                        current_value=company_name,
+                        suggested_value=explorium_enriched_data["explorium_business_data"]["name"],
+                        confidence=0.95,
+                        source="Explorium - Business Name Update",
+                        status="pending"
+                    ))
+                
+                # Suggest enriching with prospect data (e.g., job title, LinkedIn URL)
+                if "explorium_prospect_data" in explorium_enriched_data:
+                    prospect_data = explorium_enriched_data["explorium_prospect_data"]
+                    if prospect_data.get("job_title") and prospect_data["job_title"] != contact.get("title"):
+                        suggestions.append(Suggestion(
+                            user_id=user_id,
+                            contact_id=contact_id,
+                            field_name="title",
+                            current_value=contact.get("title", ""),
+                            suggested_value=prospect_data["job_title"],
+                            confidence=0.90,
+                            source="Explorium - Job Title Enrichment",
+                            status="pending"
+                        ))
+                    if prospect_data.get("linkedin_url") and prospect_data["linkedin_url"] not in [url.get("value") for url in contact.get("url", [])]:
+                        suggestions.append(Suggestion(
+                            user_id=user_id,
+                            contact_id=contact_id,
+                            field_name="url",
+                            current_value=contact.get("url", ""),
+                            suggested_value=prospect_data["linkedin_url"],
+                            confidence=0.0,
+                            source="Explorium - LinkedIn URL Enrichment",
+                            status="pending"
+                        ))
+
+        # 3. Check if contact should be split
         split_probability = predictor.calculate_split_probability(contact)
         if split_probability > 0.6:
-            suggestion = Suggestion(
+            suggestions.append(Suggestion(
                 user_id=user_id,
                 contact_id=contact_id,
-                field_name='action',
-                current_value='merged_contact',
-                suggested_value='split_contact',
+                field_name="action",
+                current_value="merged_contact",
+                suggested_value="split_contact",
                 confidence=split_probability,
-                source=f'AI Predictor - Split Analysis (Multiple emails/phones detected)',
-                status='pending'
-            )
-            suggestions.append(suggestion)
+                source="AI Predictor - Split Analysis (Multiple emails/phones detected)",
+                status="pending"
+            ))
     
-    # 3. Check for potential merges between contacts
+    # 4. Check for potential merges between contacts
     for i, contact1 in enumerate(contacts):
         for contact2 in contacts[i+1:]:
             merge_probability = predictor.calculate_merge_probability(contact1, contact2)
             if merge_probability > 0.5:
-                suggestion = Suggestion(
+                suggestions.append(Suggestion(
                     user_id=user_id,
-                    contact_id=contact1.get('id'),
-                    field_name='action',
+                    contact_id=contact1.get("id"),
+                    field_name="action",
                     current_value=f"separate_contacts_{contact1.get('id')}_{contact2.get('id')}",
                     suggested_value=f"merge_with_{contact2.get('fullName', 'Unknown')}",
                     confidence=merge_probability,
-                    source=f'AI Predictor - Merge Analysis (Similar contact detected)',
-                    status='pending'
-                )
-                suggestions.append(suggestion)
+                    source="AI Predictor - Merge Analysis (Similar contact detected)",
+                    status="pending"
+                ))
     
     return suggestions
 
@@ -82,7 +129,7 @@ def analyze_contacts():
         return jsonify({"error": "No contacts provided"}), 400
     
     # Clear existing pending suggestions for this user
-    Suggestion.query.filter_by(user_id=user_id, status='pending').delete()
+    Suggestion.query.filter_by(user_id=user_id, status="pending").delete()
     
     # Generate AI-powered suggestions
     suggestions = generate_ai_suggestions(contacts, user_id)
@@ -130,13 +177,13 @@ def approve_suggestion(suggestion_id):
         return jsonify({"error": "Suggestion not found"}), 404
     
     # Learn from approval
-    if suggestion.field_name == 'action':
-        if 'split' in suggestion.suggested_value.lower():
-            predictor.learn_from_feedback('split', {'confidence': suggestion.confidence}, approved=True)
-        elif 'merge' in suggestion.suggested_value.lower():
-            predictor.learn_from_feedback('merge', {'confidence': suggestion.confidence}, approved=True)
+    if suggestion.field_name == "action":
+        if "split" in suggestion.suggested_value.lower():
+            predictor.learn_from_feedback("split", {"confidence": suggestion.confidence}, approved=True)
+        elif "merge" in suggestion.suggested_value.lower():
+            predictor.learn_from_feedback("merge", {"confidence": suggestion.confidence}, approved=True)
     
-    suggestion.status = 'approved'
+    suggestion.status = "approved"
     db.session.commit()
     
     return jsonify({
@@ -159,13 +206,13 @@ def reject_suggestion(suggestion_id):
         return jsonify({"error": "Suggestion not found"}), 404
     
     # Learn from rejection
-    if suggestion.field_name == 'action':
-        if 'split' in suggestion.suggested_value.lower():
-            predictor.learn_from_feedback('split', {'confidence': suggestion.confidence}, approved=False)
-        elif 'merge' in suggestion.suggested_value.lower():
-            predictor.learn_from_feedback('merge', {'confidence': suggestion.confidence}, approved=False)
+    if suggestion.field_name == "action":
+        if "split" in suggestion.suggested_value.lower():
+            predictor.learn_from_feedback("split", {"confidence": suggestion.confidence}, approved=False)
+        elif "merge" in suggestion.suggested_value.lower():
+            predictor.learn_from_feedback("merge", {"confidence": suggestion.confidence}, approved=False)
     
-    suggestion.status = 'rejected'
+    suggestion.status = "rejected"
     db.session.commit()
     
     return jsonify({
@@ -184,12 +231,12 @@ def bulk_action():
     
     data = request.get_json()
     suggestion_ids = data.get("suggestion_ids", [])
-    action = data.get("action")  # 'approve' or 'reject'
+    action = data.get("action")  # "approve" or "reject"
     
-    if not suggestion_ids or action not in ['approve', 'reject']:
+    if not suggestion_ids or action not in ["approve", "reject"]:
         return jsonify({"error": "Invalid request"}), 400
     
-    status = 'approved' if action == 'approve' else 'rejected'
+    status = "approved" if action == "approve" else "rejected"
     
     suggestions = Suggestion.query.filter(
         Suggestion.id.in_(suggestion_ids),
@@ -206,3 +253,4 @@ def bulk_action():
         "message": f"{len(suggestions)} suggestions {status}",
         "count": len(suggestions)
     })
+

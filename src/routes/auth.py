@@ -12,7 +12,9 @@ def register():
     password = data.get("password")
     name = data.get("name")
 
+    print(f"Received registration data: {data}")
     if not email or not password or not name:
+        print("Missing email, password, or name")
         return jsonify({"error": "Email, password, and name are required"}), 400
 
     # Check if user already exists
