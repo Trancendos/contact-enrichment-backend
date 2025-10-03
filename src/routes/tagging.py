@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from services.ai_tagging_service import AITaggingService
+from src.services.ai_tagging_service import AITaggingService
 
 tagging_bp = Blueprint('tagging', __name__)
 ai_tagging_service = AITaggingService()
