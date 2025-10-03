@@ -16,7 +16,7 @@ class ContactManagementService:
             contact_id=new_contact_id,
             action_type="create",
             after_data=contact_data,
-            description=f"Created new contact: {contact_data.get("fullName", "Unknown")}",
+            description=f"Created new contact: {contact_data.get('fullName', 'Unknown')}",
             request=request
         )
         
@@ -33,7 +33,7 @@ class ContactManagementService:
             action_type="update",
             before_data=before_data,
             after_data=after_data,
-            description=f"Updated contact: {after_data.get("fullName", "Unknown")}",
+            description=f"Updated contact: {after_data.get('fullName', 'Unknown')}",
             request=request
         )
         
@@ -49,7 +49,7 @@ class ContactManagementService:
             contact_id=contact_id,
             action_type="delete",
             before_data=contact_data,
-            description=f"Deleted contact: {contact_data.get("fullName", "Unknown")}",
+            description=f"Deleted contact: {contact_data.get('fullName', 'Unknown')}",
             request=request
         )
         
@@ -69,7 +69,7 @@ class ContactManagementService:
             "phones": [phone_to_split],
             "organization": original_contact.get("organization", ""),
             "title": original_contact.get("title", ""),
-            "note": f"Split from: {original_contact.get("fullName", "Unknown")}",
+            "note": f"Split from: {original_contact.get('fullName', 'Unknown')}",
             "relatedNames": [],
             "rawLines": []
         }
@@ -106,7 +106,7 @@ class ContactManagementService:
                     "fullName": "",
                     "emails": [email],
                     "phones": [],
-                    "note": f"Split from: {original_contact.get("fullName", "Unknown")}"
+                    "note": f"Split from: {original_contact.get('fullName', 'Unknown')}"
                 }
                 ContactManagementService.create_contact(user_id, new_contact_data, request)
                 new_contacts.append(new_contact_data)
@@ -119,7 +119,7 @@ class ContactManagementService:
                     "fullName": "",
                     "emails": [],
                     "phones": [phone],
-                    "note": f"Split from: {original_contact.get("fullName", "Unknown")}"
+                    "note": f"Split from: {original_contact.get('fullName', 'Unknown')}"
                 }
                 ContactManagementService.create_contact(user_id, new_contact_data, request)
                 new_contacts.append(new_contact_data)
