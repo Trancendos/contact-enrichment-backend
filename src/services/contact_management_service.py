@@ -13,7 +13,7 @@ class ContactManagementService:
         self.history_service = HistoryService(db_session)
 
     def _log_history(self, contact_id, action, before_data, after_data, request_info=None):
-        self.history_service.log_history(
+        self.history_service.log_action(
             contact_id=contact_id,
             user_id=self.user_id,
             action=action,
