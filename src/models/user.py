@@ -13,9 +13,9 @@ class User(Base):
     oauth_provider = Column(String(50), nullable=True)  # 'google', 'apple', or None
     oauth_id = Column(String(255), nullable=True)
 
-    contacts = relationship('Contact', backref='user', lazy=True)
-    contact_histories = relationship('ContactHistory', backref='user', lazy=True)
-    contact_relationships = relationship('ContactRelationship', backref='user', lazy=True)
+    contacts = relationship('Contact', back_populates='user', lazy=True)
+    contact_histories = relationship('ContactHistory', back_populates='user', lazy=True)
+    contact_relationships = relationship('ContactRelationship', back_populates='user', lazy=True)
 
     def __repr__(self):
         return f'<User {self.email}>'

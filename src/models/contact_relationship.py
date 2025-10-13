@@ -18,7 +18,7 @@ class ContactRelationship(Base):
     # Define relationships to Contact model
     contact1 = relationship('Contact', foreign_keys=[contact_id_1], backref='relationships_as_contact1')
     contact2 = relationship('Contact', foreign_keys=[contact_id_2], backref='relationships_as_contact2')
-    user = relationship('User', backref='contact_relationships')
+    user = relationship('User', back_populates='contact_relationships')
 
     def __repr__(self):
         return f"<ContactRelationship(id={self.id}, contact_id_1='{self.contact_id_1}', contact_id_2='{self.contact_id_2}', type='{self.relationship_type}')>"
