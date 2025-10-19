@@ -31,12 +31,14 @@ app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 CORS(app, supports_credentials=True) # Enable CORS for all routes with credentials
 
 # Database setup
-DATABASE_URL = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
-engine = create_engine(DATABASE_URL)
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+DATABASE_URL = f"{SUPABASE_URL}/rest/v1/?apikey={SUPABASE_KEY}"
+engine = create_engine(f"postgresql://postgres:{SUPABASE_KEY}@{SUPABASE_URL.replace('https://', '').split('.')[0]}.supabase.co:5432/postgres")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create tables
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine) # Supabase handles migrations
 
 # Dependency to get DB session
 def get_db():
