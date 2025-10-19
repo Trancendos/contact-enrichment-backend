@@ -1,0 +1,56 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE: contact-enrichment-api
+  REGION: us-central1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v2'
+
+    - name: 'Configure Docker to use gcloud as credential helper'
+      run: |
+        gcloud auth configure-docker
+
+    - name: 'Build and push container image'
+      run: |
+        docker build -t gcr.io/$PROJECT_ID/$SERVICE:$GITHUB_SHA .
+        docker push gcr.io/$PROJECT_ID/$SERVICE:$GITHUB_SHA
+
+    - name: 'Deploy to Cloud Run'
+      run: |
+        gcloud run deploy $SERVICE \
+          --image gcr.io/$PROJECT_ID/$SERVICE:$GITHUB_SHA \
+          --platform managed \
+          --region $REGION \
+          --allow-unauthenticated \
+          --memory=512Mi \
+          --cpu=1 \
+          --max-instances=10 \
+          --concurrency=80 \
+          --timeout=300 \
+          --set-env-vars="ENVIRONMENT=production"
+
+    - name: 'Show service URL'
+      run: |
+        echo "Service URL: $(gcloud run services describe $SERVICE --platform managed --region $REGION --format 'value(status.url)')"
