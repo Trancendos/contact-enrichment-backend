@@ -1,3 +1,3 @@
 class DataEnrichmentPlugin:
-    def __init__(self):
-        pass
+    def enrich(self, data):
+        return f"Enriched data: {data}"
