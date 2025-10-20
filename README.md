@@ -120,4 +120,4 @@ In production, the application:
 
 ## License
 
-This project is proprietary and confidential.
+This project is proprietary and confidential. 
