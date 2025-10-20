@@ -11,6 +11,16 @@ A Flask-based backend API for contact enrichment with AI-powered tagging and rel
 - User authentication
 - PostgreSQL database with Supabase
 
+## Documentation
+
+For detailed information about API integrations, development strategies, and cost analysis:
+
+- **[API Integration Summary](./API_INTEGRATION_SUMMARY.md)** - 📋 **Start here!** Executive overview and recommendations
+- **[Quick Reference Guide](./API_INTEGRATION_QUICK_REFERENCE.md)** - 🚀 At-a-glance reference for developers
+- **[API Marketplace Analysis](./API_MARKETPLACE_ANALYSIS.md)** - 📊 Comprehensive analysis of API integrations, pros/cons
+- **[API Cost Calculation](./API_COST_CALCULATION.md)** - 💰 Detailed cost analysis, ROI calculations, financial projections
+- **[Development Strategy](./DEVELOPMENT_STRATEGY.md)** - 🛠️ Implementation roadmap, best practices, code examples
+
 ## Production Deployment
 
 The application is configured to deploy automatically to Google Cloud Run when changes are pushed to the `main` branch.
