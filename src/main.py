@@ -26,7 +26,7 @@ from src.routes.relationship import relationship_bp
 from flask_cors import CORS
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
-app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'asdf#FGSgvasgf$5$WGT')
 
 CORS(app, supports_credentials=True) # Enable CORS for all routes with credentials
 
@@ -85,5 +85,7 @@ def serve(path):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Only enable debug mode if ENVIRONMENT is not production
+    is_debug = os.environ.get('ENVIRONMENT', 'development') != 'production'
+    app.run(host='0.0.0.0', port=5000, debug=is_debug)
 
