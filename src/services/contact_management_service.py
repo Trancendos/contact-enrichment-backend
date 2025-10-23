@@ -192,6 +192,20 @@ class ContactManagementService:
 
         self._log_history(primary_contact.id, "merge_primary", before_primary_data, primary_contact.to_dict(), request_info)
         for other_contact in other_contacts:
+            # Re-parent any relationships
+            relationships = self.db_session.query(ContactRelationship).filter(
+                (ContactRelationship.contact_id_1 == other_contact.id) | (ContactRelationship.contact_id_2 == other_contact.id)
+            ).all()
+            for rel in relationships:
+                if rel.contact_id_1 == other_contact.id:
+                    rel.contact_id_1 = primary_contact.id
+                else:
+                    rel.contact_id_2 = primary_contact.id
+
+                # Check for self-referencing relationships
+                if rel.contact_id_1 == rel.contact_id_2:
+                    self.db_session.delete(rel)
+
             self._log_history(other_contact.id, "merge_deleted", other_contact.to_dict(), {}, request_info)
             self.db_session.delete(other_contact)
         self.db_session.commit()
