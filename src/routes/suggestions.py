@@ -9,7 +9,20 @@ import random
 suggestions_bp = Blueprint("suggestions", __name__)
 
 def generate_ai_suggestions(contacts, user_id, db_session):
-    """Generate AI-powered suggestions for contacts using predictor, NLU, and Explorium data"""
+    """Generates AI-powered suggestions for contacts.
+
+    This function uses a combination of NLU analysis, data enrichment
+    from Explorium, and AI-powered predictions to generate suggestions
+    for improving contact data.
+
+    Args:
+        contacts: A list of contact dictionaries to analyze.
+        user_id: The ID of the user who owns the contacts.
+        db_session: The SQLAlchemy database session.
+
+    Returns:
+        A list of Suggestion objects.
+    """
     suggestions = []
     explorium_service_instance = ExploriumService(db_session, user_id)
 
@@ -118,9 +131,16 @@ def generate_ai_suggestions(contacts, user_id, db_session):
 
 @suggestions_bp.route("/analyze", methods=["POST"])
 def analyze_contacts():
-    """Analyze contacts and generate suggestions"""
+    """Analyzes contacts and generates suggestions.
+
+    This endpoint clears any existing pending suggestions for the user,
+    then generates a new set of suggestions based on the provided
+    contacts.
+
+    Returns:
+        A JSON response with the number of suggestions generated.
+    """
     user_id = session.get("user_id")
-    
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
     
@@ -150,9 +170,12 @@ def analyze_contacts():
 
 @suggestions_bp.route("/list", methods=["GET"])
 def list_suggestions():
-    """Get all pending suggestions for the current user"""
+    """Gets all pending suggestions for the current user.
+
+    Returns:
+        A JSON response with a list of suggestions.
+    """
     user_id = session.get("user_id")
-    
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
     
@@ -167,9 +190,15 @@ def list_suggestions():
 
 @suggestions_bp.route("/<int:suggestion_id>/approve", methods=["POST"])
 def approve_suggestion(suggestion_id):
-    """Approve a suggestion and learn from feedback"""
+    """Approves a suggestion and learns from the feedback.
+
+    Args:
+        suggestion_id: The ID of the suggestion to approve.
+
+    Returns:
+        A JSON response with the approved suggestion.
+    """
     user_id = session.get("user_id")
-    
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
     
@@ -196,9 +225,15 @@ def approve_suggestion(suggestion_id):
 
 @suggestions_bp.route("/<int:suggestion_id>/reject", methods=["POST"])
 def reject_suggestion(suggestion_id):
-    """Reject a suggestion and learn from feedback"""
+    """Rejects a suggestion and learns from the feedback.
+
+    Args:
+        suggestion_id: The ID of the suggestion to reject.
+
+    Returns:
+        A JSON response with the rejected suggestion.
+    """
     user_id = session.get("user_id")
-    
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
     
@@ -225,9 +260,12 @@ def reject_suggestion(suggestion_id):
 
 @suggestions_bp.route("/bulk_action", methods=["POST"])
 def bulk_action():
-    """Approve or reject multiple suggestions at once"""
+    """Approves or rejects multiple suggestions at once.
+
+    Returns:
+        A JSON response with the number of suggestions affected.
+    """
     user_id = session.get("user_id")
-    
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
     

@@ -1,15 +1,28 @@
 # Contact Enrichment Backend
 
-A Flask-based backend API for contact enrichment with AI-powered tagging and relationship management.
+## Purpose
+
+This project is a Flask-based backend API for a contact enrichment application. It provides a robust set of features for managing contacts, enriching their data with external services, and leveraging AI to provide insights and suggestions.
 
 ## Features
 
-- Contact management with enrichment capabilities
-- AI-powered contact tagging using OpenAI
-- Contact relationship tracking
-- Contact history and suggestions
-- User authentication
-- PostgreSQL database with Supabase
+- **Contact Management**: Create, read, update, and delete contacts.
+- **Data Enrichment**: Enrich contact data with information from external services like Explorium.
+- **AI-Powered Tagging**: Automatically suggest relevant tags for contacts using OpenAI.
+- **Relationship Tracking**: Define and manage relationships between contacts.
+- **Contact History**: Track all changes to a contact's data.
+- **Suggestions**: AI-powered suggestions for merging, splitting, and improving contact data.
+- **User Authentication**: Secure user authentication and session management.
+- **Database**: PostgreSQL database hosted on Supabase.
+
+## Architecture
+
+The application is a monolithic Flask backend with a modular structure:
+
+- **`src/models`**: Contains all SQLAlchemy models for the database.
+- **`src/routes`**: Defines all API endpoints.
+- **`src/services`**: Contains the business logic for the application.
+- **`src/middleware`**: Handles authentication and other request pre-processing.
 
 ## Documentation
 
@@ -29,10 +42,10 @@ The application is configured to deploy automatically to Google Cloud Run when c
 
 The following secrets must be configured in Google Cloud Secret Manager:
 
-1. **SECRET_KEY** - Flask application secret key for session management (generate a secure random string)
-2. **SUPABASE_URL** - Your Supabase project URL (e.g., `https://xxxxx.supabase.co`)
-3. **SUPABASE_KEY** - Your Supabase database password/key
-4. **OPENAI_API_KEY** - OpenAI API key for AI tagging features
+1. **`SECRET_KEY`**: Flask application secret key for session management (generate a secure random string).
+2. **`SUPABASE_URL`**: Your Supabase project URL (e.g., `https://xxxxx.supabase.co`).
+3. **`SUPABASE_KEY`**: Your Supabase database password/key.
+4. **`OPENAI_API_KEY`**: OpenAI API key for AI tagging features.
 
 ### Setting up Secrets in Google Cloud
 
@@ -53,81 +66,80 @@ gcloud secrets add-iam-policy-binding SECRET_KEY \
 
 ### Required GitHub Secrets
 
-Configure these in your GitHub repository settings under Settings > Secrets and variables > Actions:
+Configure these in your GitHub repository settings under **Settings > Secrets and variables > Actions**:
 
-- **GCP_PROJECT_ID** - Your Google Cloud project ID
-- **GCP_SA_KEY** - Service account key JSON with permissions to deploy to Cloud Run
+- **`GCP_PROJECT_ID`**: Your Google Cloud project ID.
+- **`GCP_SA_KEY`**: Service account key JSON with permissions to deploy to Cloud Run.
 
 ## Local Development
 
 ### Prerequisites
 
 - Python 3.11+
-- PostgreSQL (or Supabase account)
+- PostgreSQL (or a Supabase account)
 
 ### Setup
 
-1. Clone the repository:
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/Trancendos/contact-enrichment-backend.git
+    cd contact-enrichment-backend
+    ```
+
+2.  **Create a virtual environment**:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+
+3.  **Install dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Set environment variables**:
+    Create a `.env` file in the root of the project and add the following variables:
+    ```bash
+    SUPABASE_URL="https://your-project.supabase.co"
+    SUPABASE_KEY="your-supabase-key"
+    OPENAI_API_KEY="your-openai-api-key"
+    SECRET_KEY="your-local-secret-key"
+    ENVIRONMENT="development"
+    ```
+
+5.  **Run the application**:
+    ```bash
+    python src/main.py
+    ```
+    The application will run on `http://localhost:5000` with debug mode enabled.
+
+### Testing
+
+The project uses Python's built-in `unittest` framework for testing. To run the tests, execute the following command from the root directory:
+
 ```bash
-git clone https://github.com/Trancendos/contact-enrichment-backend.git
-cd contact-enrichment-backend
+python -m unittest discover tests
 ```
-
-2. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Set environment variables (create a `.env` file or export):
-```bash
-export SUPABASE_URL="https://your-project.supabase.co"
-export SUPABASE_KEY="your-supabase-key"
-export OPENAI_API_KEY="your-openai-api-key"
-export SECRET_KEY="your-local-secret-key"
-export ENVIRONMENT="development"
-```
-
-5. Run the application:
-```bash
-python src/main.py
-```
-
-The application will run on `http://localhost:5000` with debug mode enabled.
-
-## Production Configuration
-
-In production, the application:
-- Runs with `ENVIRONMENT=production` (debug mode disabled)
-- Uses Gunicorn as the WSGI server
-- Loads secrets from Google Cloud Secret Manager
-- Serves static frontend files from the `/static` directory
-- Enforces HTTPS and security best practices
 
 ## API Endpoints
 
-- `/api/auth/*` - Authentication endpoints
-- `/api/enrichment/*` - Contact enrichment endpoints
-- `/api/suggestions/*` - Contact suggestions
-- `/api/tagging/*` - AI tagging endpoints
-- `/api/history/*` - Contact history
-- `/api/*` - Contact and user management
+-   `/api/auth/*`: Authentication endpoints (`/register`, `/login`, `/logout`, `/me`).
+-   `/api/enrichment/*`: Contact enrichment endpoints (`/enrich_contact`).
+-   `/api/suggestions/*`: Endpoints for managing and acting on contact suggestions.
+-   `/api/tagging/*`: AI tagging endpoints (`/suggest_tags`, `/suggest_tags_batch`).
+-   `/api/history/*`: Endpoints for retrieving contact and user history.
+-   `/api/*`: Contact and user management endpoints.
 
 ## Technology Stack
 
-- **Backend Framework**: Flask 3.1.2
-- **WSGI Server**: Gunicorn 23.0.0 (production)
-- **Database**: PostgreSQL via Supabase
-- **ORM**: SQLAlchemy 2.0.43
-- **AI/ML**: OpenAI API
-- **Deployment**: Google Cloud Run
-- **CI/CD**: GitHub Actions
+-   **Backend Framework**: Flask 3.1.2
+-   **WSGI Server**: Gunicorn 23.0.0 (production)
+-   **Database**: PostgreSQL via Supabase
+-   **ORM**: SQLAlchemy 2.0.43
+-   **AI/ML**: OpenAI API
+-   **Deployment**: Google Cloud Run
+-   **CI/CD**: GitHub Actions
 
 ## License
 
-This project is proprietary and confidential. 
+This project is proprietary and confidential.

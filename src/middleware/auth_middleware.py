@@ -3,6 +3,19 @@ from flask import request, jsonify, g, current_app, session
 from src.models.user import User
 
 def login_required(f):
+    """Decorator to protect routes that require authentication.
+
+    This decorator checks for a valid user ID in the session, verifies
+    that the user exists in the database, and then stores the user's ID
+    and email in the Flask global object `g` for the duration of the
+    request.
+
+    Args:
+        f: The function to decorate.
+
+    Returns:
+        The decorated function.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get("user_id"):

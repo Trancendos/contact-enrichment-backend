@@ -4,19 +4,20 @@ from sqlalchemy.sql import func
 from .base import Base
 
 class Suggestion(Base):
+    """Represents a suggestion for improving contact data."""
     __tablename__ = 'suggestions'
 
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    contact_id = Column(String, nullable=False)  # UUID of the contact
-    field_name = Column(String(100), nullable=False)
-    current_value = Column(String(500), nullable=True)
-    suggested_value = Column(String(500), nullable=False)
-    confidence = Column(Float, nullable=False)
-    source = Column(String(255), nullable=False)
-    status = Column(String(50), default='pending')
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, onupdate=func.now())
+    id: int = Column(Integer, primary_key=True)  # The unique identifier for the suggestion.
+    user_id: int = Column(Integer, ForeignKey('users.id'), nullable=False)  # The ID of the user who owns this suggestion.
+    contact_id: str = Column(String, nullable=False)  # The ID of the contact this suggestion is for.
+    field_name: str = Column(String(100), nullable=False)  # The name of the field the suggestion is for.
+    current_value: str = Column(String(500), nullable=True)  # The current value of the field.
+    suggested_value: str = Column(String(500), nullable=False)  # The suggested new value for the field.
+    confidence: float = Column(Float, nullable=False)  # The confidence score of the suggestion.
+    source: str = Column(String(255), nullable=False)  # The source of the suggestion (e.g., 'AI', 'NLU').
+    status: str = Column(String(50), default='pending')  # The status of the suggestion (e.g., 'pending', 'accepted').
+    created_at: DateTime = Column(DateTime, server_default=func.now())  # The timestamp when the suggestion was created.
+    updated_at: DateTime = Column(DateTime, onupdate=func.now())  # The timestamp when the suggestion was last updated.
 
     user = relationship('User', backref='suggestions')
 

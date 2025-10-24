@@ -7,12 +7,27 @@ from datetime import datetime
 import json
 
 class ContactManagementService:
+    """Manages contact-related operations.
+
+    This service provides methods for creating, updating, deleting,
+    splitting, merging, and managing relationships for contacts. It also
+    logs all actions to the contact history.
+    """
     def __init__(self, db_session: Session, user_id: int):
         self.db_session = db_session
         self.user_id = user_id
         self.history_service = HistoryService(db_session)
 
     def _log_history(self, contact_id, action, before_data, after_data, request_info=None):
+        """Logs a contact history event.
+
+        Args:
+            contact_id: The ID of the contact.
+            action: The action performed (e.g., 'create', 'update').
+            before_data: The contact data before the action.
+            after_data: The contact data after the action.
+            request_info: Optional information about the request.
+        """
         self.history_service.log_action(
             contact_id=contact_id,
             user_id=self.user_id,
@@ -24,6 +39,15 @@ class ContactManagementService:
         )
 
     def create_contact(self, contact_data: dict, request_info=None):
+        """Creates a new contact.
+
+        Args:
+            contact_data: A dictionary of contact data.
+            request_info: Optional information about the request.
+
+        Returns:
+            A dictionary with the result of the operation.
+        """
         new_contact = Contact(
             user_id=self.user_id,
             full_name=contact_data.get("full_name"),
@@ -45,6 +69,16 @@ class ContactManagementService:
         return {"success": True, "contact": new_contact.to_dict()}
 
     def update_contact(self, contact_id: int, updated_data: dict, request_info=None):
+        """Updates an existing contact.
+
+        Args:
+            contact_id: The ID of the contact to update.
+            updated_data: A dictionary of updated contact data.
+            request_info: Optional information about the request.
+
+        Returns:
+            A dictionary with the result of the operation.
+        """
         contact = self.db_session.query(Contact).filter_by(id=contact_id, user_id=self.user_id).first()
         if not contact:
             return {"success": False, "error": "Contact not found"}
@@ -61,6 +95,15 @@ class ContactManagementService:
         return {"success": True, "contact": contact.to_dict()}
 
     def delete_contact(self, contact_id: int, request_info=None):
+        """Deletes a contact.
+
+        Args:
+            contact_id: The ID of the contact to delete.
+            request_info: Optional information about the request.
+
+        Returns:
+            A dictionary with the result of the operation.
+        """
         contact = self.db_session.query(Contact).filter_by(id=contact_id, user_id=self.user_id).first()
         if not contact:
             return {"success": False, "error": "Contact not found"}
@@ -72,6 +115,16 @@ class ContactManagementService:
         return {"success": True, "message": "Contact deleted"}
 
     def split_phone(self, original_contact_id: int, phone_to_split: dict, request_info=None):
+        """Splits a phone number into a new contact.
+
+        Args:
+            original_contact_id: The ID of the original contact.
+            phone_to_split: The phone number to split.
+            request_info: Optional information about the request.
+
+        Returns:
+            A dictionary with the result of the operation.
+        """
         original_contact = self.db_session.query(Contact).filter_by(id=original_contact_id, user_id=self.user_id).first()
         if not original_contact:
             return {"success": False, "error": "Original contact not found"}
@@ -111,6 +164,15 @@ class ContactManagementService:
         return {"success": True, "new_contact": new_contact.to_dict(), "updated_original": original_contact.to_dict()}
 
     def split_all(self, original_contact_id: int, request_info=None):
+        """Splits all phone numbers and emails into new contacts.
+
+        Args:
+            original_contact_id: The ID of the original contact.
+            request_info: Optional information about the request.
+
+        Returns:
+            A dictionary with the result of the operation.
+        """
         original_contact = self.db_session.query(Contact).filter_by(id=original_contact_id, user_id=self.user_id).first()
         if not original_contact:
             return {"success": False, "error": "Original contact not found"}
@@ -169,6 +231,15 @@ class ContactManagementService:
         return {"success": True, "new_contacts": [nc.to_dict() for nc in new_contacts]}
 
     def merge_contacts(self, contact_ids: list[int], request_info=None):
+        """Merges multiple contacts into a single contact.
+
+        Args:
+            contact_ids: A list of contact IDs to merge.
+            request_info: Optional information about the request.
+
+        Returns:
+            A dictionary with the result of the operation.
+        """
         contacts_to_merge = self.db_session.query(Contact).filter(Contact.id.in_(contact_ids), Contact.user_id == self.user_id).all()
         if not contacts_to_merge or len(contacts_to_merge) < 2:
             return {"success": False, "error": "At least two contacts are required for merging"}
@@ -199,6 +270,17 @@ class ContactManagementService:
         return {"success": True, "merged_contact": primary_contact.to_dict()}
 
     def add_relationship(self, contact_id_1: int, contact_id_2: int, relationship_type: str, request_info=None):
+        """Adds a relationship between two contacts.
+
+        Args:
+            contact_id_1: The ID of the first contact.
+            contact_id_2: The ID of the second contact.
+            relationship_type: The type of relationship.
+            request_info: Optional information about the request.
+
+        Returns:
+            A dictionary with the result of the operation.
+        """
         if contact_id_1 == contact_id_2:
             return {"success": False, "error": "Cannot create a relationship with self"}
 
@@ -233,6 +315,15 @@ class ContactManagementService:
         return {"success": True, "relationship": new_relationship.to_dict()}
 
     def remove_relationship(self, relationship_id: int, request_info=None):
+        """Removes a relationship between two contacts.
+
+        Args:
+            relationship_id: The ID of the relationship to remove.
+            request_info: Optional information about the request.
+
+        Returns:
+            A dictionary with the result of the operation.
+        """
         relationship = self.db_session.query(ContactRelationship).filter_by(id=relationship_id, user_id=self.user_id).first()
         if not relationship:
             return {"success": False, "error": "Relationship not found"}
@@ -247,6 +338,14 @@ class ContactManagementService:
         return {"success": True, "message": "Relationship removed"}
 
     def get_relationships_for_contact(self, contact_id: int):
+        """Gets all relationships for a specific contact.
+
+        Args:
+            contact_id: The ID of the contact.
+
+        Returns:
+            A list of relationships.
+        """
         relationships = self.db_session.query(ContactRelationship).filter(
             ((ContactRelationship.contact_id_1 == contact_id) | (ContactRelationship.contact_id_2 == contact_id)) &
             (ContactRelationship.user_id == self.user_id)
@@ -266,6 +365,11 @@ class ContactManagementService:
         return result
 
     def get_all_relationships(self):
+        """Gets all relationships for the current user.
+
+        Returns:
+            A list of all relationships.
+        """
         relationships = self.db_session.query(ContactRelationship).filter_by(user_id=self.user_id).all()
         result = []
         for rel in relationships:

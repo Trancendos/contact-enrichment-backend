@@ -7,13 +7,26 @@ from collections import defaultdict
 from datetime import datetime
 
 class ContactAIPredictor:
+    """Predicts contact merging and splitting using AI.
+
+    This class uses a set of heuristics and learning from user feedback to
+    predict whether contacts should be merged or split.
+    """
     def __init__(self):
+        """Initializes the ContactAIPredictor."""
         self.merge_patterns = defaultdict(int)  # Track approved merge patterns
         self.split_patterns = defaultdict(int)  # Track approved split patterns
         self.rejection_patterns = defaultdict(int)  # Track rejected suggestions
         
     def extract_contact_features(self, contact):
-        """Extract features from a contact for ML analysis"""
+        """Extracts features from a contact for ML analysis.
+
+        Args:
+            contact: A dictionary representing a contact.
+
+        Returns:
+            A dictionary of features.
+        """
         features = {
             'has_multiple_emails': len([e for e in contact.get('emails', []) if e.get('value')]) > 1,
             'has_multiple_phones': len([p for p in contact.get('phones', []) if p.get('value')]) > 1,
@@ -28,7 +41,15 @@ class ContactAIPredictor:
         return features
     
     def calculate_merge_probability(self, contact1, contact2):
-        """Calculate probability that two contacts should be merged"""
+        """Calculates the probability that two contacts should be merged.
+
+        Args:
+            contact1: The first contact dictionary.
+            contact2: The second contact dictionary.
+
+        Returns:
+            A float between 0.0 and 1.0 representing the probability.
+        """
         score = 0.0
         max_score = 0.0
         
@@ -84,7 +105,14 @@ class ContactAIPredictor:
         return probability
     
     def calculate_split_probability(self, contact):
-        """Calculate probability that a contact should be split"""
+        """Calculates the probability that a contact should be split.
+
+        Args:
+            contact: The contact dictionary to analyze.
+
+        Returns:
+            A float between 0.0 and 1.0 representing the probability.
+        """
         features = self.extract_contact_features(contact)
         score = 0.0
         
@@ -107,9 +135,18 @@ class ContactAIPredictor:
         return min(score, 1.0)
     
     def learn_from_feedback(self, suggestion_type, features, approved):
-        """Learn from user approval/rejection of suggestions"""
+        """Learns from user approval or rejection of suggestions.
+
+        This method updates the internal patterns based on user feedback,
+        allowing the predictor to improve over time.
+
+        Args:
+            suggestion_type: The type of suggestion ('merge' or 'split').
+            features: The features associated with the suggestion.
+            approved: A boolean indicating whether the suggestion was
+                approved.
+        """
         feature_key = json.dumps(features, sort_keys=True)
-        
         if approved:
             if suggestion_type == 'merge':
                 self.merge_patterns[feature_key] += 1

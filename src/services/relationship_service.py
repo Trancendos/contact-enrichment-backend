@@ -5,12 +5,24 @@ from src.models.user import User
 from src.services.history_service import HistoryService
 
 class RelationshipService:
+    """Manages relationships between contacts."""
     def __init__(self, db: Session, user_id: int):
         self.db = db
         self.user_id = user_id
         self.history_service = HistoryService(db, user_id)
 
     def create_relationship(self, contact_id_1: str, contact_id_2: str, relationship_type: str, description: str = None):
+        """Creates a new relationship between two contacts.
+
+        Args:
+            contact_id_1: The ID of the first contact.
+            contact_id_2: The ID of the second contact.
+            relationship_type: The type of relationship.
+            description: An optional description of the relationship.
+
+        Returns:
+            The newly created ContactRelationship object.
+        """
         if contact_id_1 == contact_id_2:
             raise ValueError("Cannot create a relationship with the same contact.")
 
@@ -57,6 +69,14 @@ class RelationshipService:
         return relationship
 
     def get_relationships_for_contact(self, contact_id: str):
+        """Gets all relationships for a specific contact.
+
+        Args:
+            contact_id: The ID of the contact.
+
+        Returns:
+            A list of ContactRelationship objects.
+        """
         relationships = self.db.query(ContactRelationship).filter(
             ((ContactRelationship.contact_id_1 == contact_id) | (ContactRelationship.contact_id_2 == contact_id))
             & (ContactRelationship.user_id == self.user_id)
@@ -64,6 +84,14 @@ class RelationshipService:
         return relationships
 
     def delete_relationship(self, relationship_id: int):
+        """Deletes a relationship.
+
+        Args:
+            relationship_id: The ID of the relationship to delete.
+
+        Returns:
+            A dictionary with a success message.
+        """
         relationship = self.db.query(ContactRelationship).filter(
             ContactRelationship.id == relationship_id,
             ContactRelationship.user_id == self.user_id
@@ -98,6 +126,16 @@ class RelationshipService:
         return {"message": "Relationship deleted successfully"}
 
     def update_relationship(self, relationship_id: int, new_type: str = None, new_description: str = None):
+        """Updates a relationship.
+
+        Args:
+            relationship_id: The ID of the relationship to update.
+            new_type: The new relationship type.
+            new_description: The new description.
+
+        Returns:
+            The updated ContactRelationship object.
+        """
         relationship = self.db.query(ContactRelationship).filter(
             ContactRelationship.id == relationship_id,
             ContactRelationship.user_id == self.user_id

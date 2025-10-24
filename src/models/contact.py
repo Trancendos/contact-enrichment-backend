@@ -5,23 +5,24 @@ from sqlalchemy.dialects.sqlite import JSON
 from .base import Base
 
 class Contact(Base):
+    """Represents a contact in the database."""
     __tablename__ = 'contacts'
 
-    id = Column(String, primary_key=True, index=True) # UUID as string
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    full_name = Column(String, index=True)
-    first_name = Column(String, nullable=True)
-    last_name = Column(String, nullable=True)
-    organization = Column(String, nullable=True)
-    title = Column(String, nullable=True)
-    emails = Column(JSON, nullable=True) # List of dicts: [{value: "", type: ""}]
-    phones = Column(JSON, nullable=True) # List of dicts: [{value: "", type: ""}]
-    notes = Column(Text, nullable=True)
-    tags = Column(JSON, nullable=True) # List of strings
-    related_names = Column(JSON, nullable=True) # For merged contacts
-    explorium_data = Column(JSON, nullable=True) # Enriched data from Explorium
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, onupdate=func.now())
+    id: str = Column(String, primary_key=True, index=True)  # The unique identifier for the contact.
+    user_id: int = Column(Integer, ForeignKey('users.id'), nullable=False)  # The ID of the user who owns this contact.
+    full_name: str = Column(String, index=True)  # The full name of the contact.
+    first_name: str = Column(String, nullable=True)  # The first name of the contact.
+    last_name: str = Column(String, nullable=True)  # The last name of the contact.
+    organization: str = Column(String, nullable=True)  # The organization the contact belongs to.
+    title: str = Column(String, nullable=True)  # The contact's title at their organization.
+    emails: list = Column(JSON, nullable=True)  # A list of email addresses for the contact.
+    phones: list = Column(JSON, nullable=True)  # A list of phone numbers for the contact.
+    notes: str = Column(Text, nullable=True)  # Any notes about the contact.
+    tags: list = Column(JSON, nullable=True)  # A list of tags for categorizing the contact.
+    related_names: list = Column(JSON, nullable=True)  # A list of names related to this contact.
+    explorium_data: dict = Column(JSON, nullable=True)  # Enriched data from the Explorium service.
+    created_at: DateTime = Column(DateTime, server_default=func.now())  # The timestamp when the contact was created.
+    updated_at: DateTime = Column(DateTime, onupdate=func.now())  # The timestamp when the contact was last updated.
 
     user = relationship('User', back_populates='contacts')
 

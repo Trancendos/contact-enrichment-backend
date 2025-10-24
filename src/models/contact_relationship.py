@@ -4,18 +4,17 @@ from sqlalchemy.sql import func
 from src.models.base import Base
 
 class ContactRelationship(Base):
+    """Represents a relationship between two contacts."""
     __tablename__ = 'contact_relationships'
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    contact_id_1 = Column(String, ForeignKey('contacts.id'), nullable=False)
-    contact_id_2 = Column(String, ForeignKey('contacts.id'), nullable=False)
-    relationship_type = Column(String, nullable=False)  # e.g., 'colleague', 'family', 'friend'
-    description = Column(Text, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, onupdate=func.now())
-
-    # Define relationships to Contact model
+    id: int = Column(Integer, primary_key=True, index=True)  # The unique identifier for the relationship.
+    user_id: int = Column(Integer, ForeignKey('users.id'), nullable=False)  # The ID of the user who owns this relationship.
+    contact_id_1: str = Column(String, ForeignKey('contacts.id'), nullable=False)  # The ID of the first contact in the relationship.
+    contact_id_2: str = Column(String, ForeignKey('contacts.id'), nullable=False)  # The ID of the second contact in the relationship.
+    relationship_type: str = Column(String, nullable=False)  # The type of relationship (e.g., 'colleague', 'family').
+    description: str = Column(Text, nullable=True)  # A description of the relationship.
+    created_at: DateTime = Column(DateTime, server_default=func.now())  # The timestamp when the relationship was created.
+    updated_at: DateTime = Column(DateTime, onupdate=func.now())  # The timestamp when the relationship was last updated.
     contact1 = relationship('Contact', foreign_keys=[contact_id_1], backref='relationships_as_contact1')
     contact2 = relationship('Contact', foreign_keys=[contact_id_2], backref='relationships_as_contact2')
     user = relationship('User', back_populates='contact_relationships')

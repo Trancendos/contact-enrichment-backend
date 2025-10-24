@@ -42,6 +42,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Dependency to get DB session
 def get_db():
+    """Gets a database session.
+
+    This function is a dependency that provides a database session to the
+    application. It ensures that the session is closed after the request
+    is finished.
+
+    Yields:
+        The database session.
+    """
     db_session = SessionLocal()
     try:
         yield db_session
@@ -50,10 +59,19 @@ def get_db():
 
 @app.before_request
 def before_request():
+    """Creates a new database session for each request."""
     g.db = SessionLocal()
 
 @app.after_request
 def after_request(response):
+    """Closes the database session after each request.
+
+    Args:
+        response: The response object.
+
+    Returns:
+        The response object.
+    """
     if hasattr(g, 'db'):
         g.db.close()
     return response
@@ -70,6 +88,18 @@ app.register_blueprint(relationship_bp, url_prefix='/api')
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
+    """Serves the static files for the frontend.
+
+    This function serves the `index.html` file for any path that is not
+    a recognized API endpoint. This is necessary for single-page
+    applications.
+
+    Args:
+        path: The path to the file to serve.
+
+    Returns:
+        The file, or a 404 error if the file is not found.
+    """
     static_folder_path = app.static_folder
     if static_folder_path is None:
             return "Static folder not configured", 404

@@ -7,7 +7,11 @@ tagging_bp = Blueprint("tagging", __name__)
 @tagging_bp.route("/api/suggest_tags", methods=["POST"])
 @login_required
 def suggest_tags():
-    """Suggest tags for a contact using AI"""
+    """Suggests tags for a contact using AI.
+
+    Returns:
+        A JSON response with a list of suggested tags.
+    """
     user_id = g.user_id
     try:
         data = request.get_json()
@@ -31,7 +35,11 @@ def suggest_tags():
 @tagging_bp.route("/api/suggest_tags_batch", methods=["POST"])
 @login_required
 def suggest_tags_batch():
-    """Suggest tags for multiple contacts using AI"""
+    """Suggests tags for multiple contacts using AI.
+
+    Returns:
+        A JSON response with a list of suggestions for each contact.
+    """
     user_id = g.user_id
     try:
         data = request.get_json()

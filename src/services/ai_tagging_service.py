@@ -9,21 +9,26 @@ except ImportError:
     OpenAI = None
 
 class AITaggingService:
+    """Provides AI-powered and rule-based contact tagging.
+
+    This service can use OpenAI to suggest tags for contacts, or fall back
+    to a rule-based system if the OpenAI API is not available.
+    """
     def __init__(self):
+        """Initializes the AITaggingService."""
         if OPENAI_AVAILABLE and OpenAI:
             self.client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
         else:
             self.client = None
     
     def suggest_tags(self, contact_data):
-        """
-        Analyze contact data and suggest relevant tags using AI.
+        """Analyzes contact data and suggests relevant tags using AI.
         
         Args:
-            contact_data: Dictionary containing contact information
+            contact_data: A dictionary containing contact information.
             
         Returns:
-            List of suggested tags
+            A list of suggested tags.
         """
         if not self.client:
             # Fallback to rule-based tagging if OpenAI is not available
@@ -95,14 +100,13 @@ Do not include tags that already exist."""
             return []
     
     def suggest_tags_batch(self, contacts):
-        """
-        Suggest tags for multiple contacts at once.
+        """Suggests tags for multiple contacts at once.
         
         Args:
-            contacts: List of contact dictionaries
+            contacts: A list of contact dictionaries.
             
         Returns:
-            Dictionary mapping contact IDs to suggested tags
+            A dictionary mapping contact IDs to suggested tags.
         """
         results = {}
         for contact in contacts:
@@ -112,17 +116,15 @@ Do not include tags that already exist."""
         return results
     
     def _fallback_suggest_tags(self, contact_data):
-        """
-        Rule-based fallback tagging when AI is not available.
+        """Provides rule-based fallback tagging when AI is not available.
         
         Args:
-            contact_data: Dictionary containing contact information
+            contact_data: A dictionary containing contact information.
             
         Returns:
-            List of suggested tags
+            A list of suggested tags.
         """
         tags = []
-        
         # Check organization
         org = contact_data.get('org', '').lower()
         if org:

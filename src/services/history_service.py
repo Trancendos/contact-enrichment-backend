@@ -4,25 +4,26 @@ from datetime import datetime
 from src.models.contact_history import ContactHistory
 
 class HistoryService:
-    """Service for logging contact changes and managing history"""
+    """Service for logging contact changes and managing history."""
     def __init__(self, db_session: Session):
         self.db_session = db_session
 
     def log_action(self, user_id, contact_id, action_type, before_data=None, after_data=None, description=None, request_info=None):
-        """
-        Log a contact action to the history database.
+        """Logs a contact action to the history database.
         
         Args:
-            user_id: ID of the user performing the action
-            contact_id: ID of the contact being modified
-            action_type: Type of action ("create", "update", "delete", "split", "merge")
-            before_data: Contact data before the change (dict)
-            after_data: Contact data after the change (dict)
-            description: Human-readable description of the change
-            request_info: Dictionary containing request information (e.g., IP, user agent)
+            user_id: ID of the user performing the action.
+            contact_id: ID of the contact being modified.
+            action_type: Type of action ("create", "update", "delete",
+                "split", "merge").
+            before_data: Contact data before the change (dict).
+            after_data: Contact data after the change (dict).
+            description: Human-readable description of the change.
+            request_info: Dictionary containing request information (e.g.,
+                IP, user agent).
             
         Returns:
-            ContactHistory object
+            The created ContactHistory object, or None on error.
         """
         try:
             history_entry = ContactHistory(
@@ -46,16 +47,15 @@ class HistoryService:
             return None
     
     def get_contact_history(self, user_id, contact_id, limit=50):
-        """
-        Get history for a specific contact.
+        """Gets the history for a specific contact.
         
         Args:
-            user_id: ID of the user
-            contact_id: ID of the contact
-            limit: Maximum number of history entries to return
+            user_id: ID of the user.
+            contact_id: ID of the contact.
+            limit: Maximum number of history entries to return.
             
         Returns:
-            List of ContactHistory objects
+            A list of ContactHistory objects.
         """
         try:
             history = self.db_session.query(ContactHistory).filter_by(
@@ -69,15 +69,14 @@ class HistoryService:
             return []
     
     def get_user_history(self, user_id, limit=100):
-        """
-        Get all history for a user.
+        """Gets all history for a user.
         
         Args:
-            user_id: ID of the user
-            limit: Maximum number of history entries to return
+            user_id: ID of the user.
+            limit: Maximum number of history entries to return.
             
         Returns:
-            List of ContactHistory objects
+            A list of ContactHistory objects.
         """
         try:
             history = self.db_session.query(ContactHistory).filter_by(
@@ -90,16 +89,15 @@ class HistoryService:
             return []
     
     def get_recent_actions(self, user_id, action_types=None, limit=20):
-        """
-        Get recent actions for a user, optionally filtered by action type.
+        """Gets recent actions for a user.
         
         Args:
-            user_id: ID of the user
-            action_types: List of action types to filter by (optional)
-            limit: Maximum number of history entries to return
+            user_id: ID of the user.
+            action_types: A list of action types to filter by (optional).
+            limit: Maximum number of history entries to return.
             
         Returns:
-            List of ContactHistory objects
+            A list of ContactHistory objects.
         """
         try:
             query = self.db_session.query(ContactHistory).filter_by(user_id=user_id)
@@ -115,15 +113,14 @@ class HistoryService:
             return []
     
     def undo_action(self, user_id, history_id):
-        """
-        Undo a specific action by restoring the before_data.
+        """Undoes a specific action by restoring the before_data.
         
         Args:
-            user_id: ID of the user
-            history_id: ID of the history entry to undo
+            user_id: ID of the user.
+            history_id: ID of the history entry to undo.
             
         Returns:
-            Dict with success status and restored contact data
+            A dict with success status and restored contact data.
         """
         try:
             history_entry = self.db_session.query(ContactHistory).filter_by(
@@ -160,15 +157,14 @@ class HistoryService:
             return {"success": False, "error": str(e)}
     
     def create_backup(self, user_id, contacts_data):
-        """
-        Create a backup of all contacts.
+        """Creates a backup of all contacts.
         
         Args:
-            user_id: ID of the user
-            contacts_data: List of contact dictionaries
+            user_id: ID of the user.
+            contacts_data: A list of contact dictionaries.
             
         Returns:
-            ContactHistory object representing the backup
+            A ContactHistory object representing the backup.
         """
         try:
             backup_entry = ContactHistory(
@@ -189,15 +185,14 @@ class HistoryService:
             return None
     
     def get_backups(self, user_id, limit=10):
-        """
-        Get all backups for a user.
+        """Gets all backups for a user.
         
         Args:
-            user_id: ID of the user
-            limit: Maximum number of backups to return
+            user_id: ID of the user.
+            limit: Maximum number of backups to return.
             
         Returns:
-            List of backup history entries
+            A list of backup history entries.
         """
         try:
             backups = self.db_session.query(ContactHistory).filter_by(

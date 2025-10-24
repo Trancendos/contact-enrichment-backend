@@ -7,6 +7,16 @@ auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
+    """Registers a new user.
+
+    Retrieves user registration data (email, password, name) from the
+    request JSON, creates a new user, and logs them in by creating a
+    session.
+
+    Returns:
+        A JSON response indicating success or failure. On success,
+        includes the new user's information.
+    """
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
@@ -47,6 +57,15 @@ def register():
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
+    """Logs in an existing user.
+
+    Retrieves user credentials (email, password) from the request JSON,
+    verifies them, and creates a session upon successful authentication.
+
+    Returns:
+        A JSON response indicating success or failure. On success,
+        includes the user's information.
+    """
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
@@ -76,11 +95,27 @@ def login():
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
+    """Logs out the current user.
+
+    Clears the session, effectively logging the user out.
+
+    Returns:
+        A JSON response indicating successful logout.
+    """
     session.clear()
     return jsonify({"success": True, "message": "Logged out successfully"})
 
 @auth_bp.route("/me", methods=["GET"])
 def get_current_user():
+    """Retrieves the currently authenticated user's information.
+
+    Fetches the current user's data from the database based on the
+    session user ID.
+
+    Returns:
+        A JSON response with the user's information if authenticated,
+        otherwise an error message.
+    """
     user_id = session.get("user_id")
     
     if not user_id:
@@ -102,6 +137,15 @@ def get_current_user():
 
 @auth_bp.route("/oauth/google", methods=["POST"])
 def google_oauth():
+    """Placeholder for Google OAuth implementation.
+
+    This endpoint is a mock for Google OAuth. In a production
+    environment, it would verify the provided Google token, and then
+    either create a new user or log in an existing one.
+
+    Returns:
+        A JSON response indicating the feature is not yet implemented.
+    """
     # Placeholder for Google OAuth implementation
     # In production, this would verify the Google token and create/login user
     data = request.get_json()
@@ -116,6 +160,15 @@ def google_oauth():
 
 @auth_bp.route("/oauth/apple", methods=["POST"])
 def apple_oauth():
+    """Placeholder for Apple Sign-In implementation.
+
+    This endpoint is a mock for Apple Sign-In. In a production
+    environment, it would verify the provided Apple token, and then
+    either create a new user or log in an existing one.
+
+    Returns:
+        A JSON response indicating the feature is not yet implemented.
+    """
     # Placeholder for Apple Sign-In implementation
     # In production, this would verify the Apple token and create/login user
     data = request.get_json()

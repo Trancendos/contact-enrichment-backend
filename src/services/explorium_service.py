@@ -5,7 +5,15 @@ from sqlalchemy.orm import Session
 from src.models.contact import Contact
 
 def call_explorium_tool(tool_name, input_data):
-    """Calls a specified Explorium MCP tool with the given input data."""
+    """Calls a specified Explorium MCP tool with the given input data.
+
+    Args:
+        tool_name: The name of the Explorium tool to call.
+        input_data: A dictionary of input data for the tool.
+
+    Returns:
+        The JSON response from the tool, or an error dictionary.
+    """
     input_json = json.dumps(input_data)
     command = [
         "manus-mcp-cli",
@@ -34,12 +42,21 @@ def call_explorium_tool(tool_name, input_data):
             return {"error": "JSON decode error", "output": result.stdout}
 
 class ExploriumService:
+    """Provides an interface to the Explorium data enrichment service."""
     def __init__(self, db: Session, user_id: int):
         self.db = db
         self.user_id = user_id
 
     def get_business_id(self, company_name=None, domain=None):
-        """Matches a company name or domain to get an Explorium business ID."""
+        """Matches a company name or domain to get an Explorium business ID.
+
+        Args:
+            company_name: The name of the company.
+            domain: The domain of the company.
+
+        Returns:
+            The Explorium business ID, or None if not found.
+        """
         if not company_name and not domain:
             return None
 
@@ -64,7 +81,17 @@ class ExploriumService:
         return None
 
     def enrich_contact_with_explorium(self, contact_data: dict):
-        """Enriches a contact with data from Explorium based on company and prospect info."""
+        """Enriches a contact with data from Explorium.
+
+        This method uses the contact's company and prospect information to
+        enrich the contact with data from Explorium.
+
+        Args:
+            contact_data: A dictionary of contact data.
+
+        Returns:
+            A dictionary of enriched data from Explorium.
+        """
         enriched_data = {}
         company_name = contact_data.get("organization")
         # Assuming emails is a list of dicts, get the first valid email

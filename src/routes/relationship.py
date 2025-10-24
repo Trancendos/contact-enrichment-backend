@@ -7,6 +7,11 @@ relationship_bp = Blueprint("relationship_bp", __name__)
 @relationship_bp.route("/relationships", methods=["POST"])
 @login_required
 def create_relationship():
+    """Creates a new relationship between two contacts.
+
+    Returns:
+        A JSON response with the created relationship.
+    """
     user_id = session.get("user_id")
     data = request.json
     contact_id_1 = data.get("contact_id_1")
@@ -30,6 +35,14 @@ def create_relationship():
 @relationship_bp.route("/relationships/<string:contact_id>", methods=["GET"])
 @login_required
 def get_relationships_for_contact(contact_id):
+    """Gets all relationships for a specific contact.
+
+    Args:
+        contact_id: The ID of the contact.
+
+    Returns:
+        A JSON response with a list of relationships.
+    """
     user_id = session.get("user_id")
 
     try:
@@ -42,6 +55,14 @@ def get_relationships_for_contact(contact_id):
 @relationship_bp.route("/relationships/<int:relationship_id>", methods=["PUT"])
 @login_required
 def update_relationship(relationship_id):
+    """Updates a relationship.
+
+    Args:
+        relationship_id: The ID of the relationship to update.
+
+    Returns:
+        A JSON response with the updated relationship.
+    """
     user_id = session.get("user_id")
     data = request.json
     new_type = data.get("relationship_type")
@@ -63,6 +84,14 @@ def update_relationship(relationship_id):
 @relationship_bp.route("/relationships/<int:relationship_id>", methods=["DELETE"])
 @login_required
 def delete_relationship(relationship_id):
+    """Deletes a relationship.
+
+    Args:
+        relationship_id: The ID of the relationship to delete.
+
+    Returns:
+        A JSON response with the result of the deletion.
+    """
     user_id = session.get("user_id")
 
     try:

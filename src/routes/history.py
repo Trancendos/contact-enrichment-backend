@@ -7,7 +7,14 @@ history_bp = Blueprint("history", __name__)
 @history_bp.route("/api/history/contact/<contact_id>", methods=["GET"])
 @login_required
 def get_contact_history(contact_id):
-    """Get history for a specific contact"""
+    """Get history for a specific contact.
+
+    Args:
+        contact_id: The ID of the contact.
+
+    Returns:
+        A JSON response with the contact's history.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -26,7 +33,11 @@ def get_contact_history(contact_id):
 @history_bp.route("/api/history/user", methods=["GET"])
 @login_required
 def get_user_history():
-    """Get all history for the current user"""
+    """Get all history for the current user.
+
+    Returns:
+        A JSON response with the user's history.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -45,7 +56,11 @@ def get_user_history():
 @history_bp.route("/api/history/recent", methods=["GET"])
 @login_required
 def get_recent_actions():
-    """Get recent actions for the current user"""
+    """Get recent actions for the current user.
+
+    Returns:
+        A JSON response with the user's recent actions.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -69,7 +84,14 @@ def get_recent_actions():
 @history_bp.route("/api/history/undo/<int:history_id>", methods=["POST"])
 @login_required
 def undo_action(history_id):
-    """Undo a specific action"""
+    """Undo a specific action.
+
+    Args:
+        history_id: The ID of the history entry to undo.
+
+    Returns:
+        A JSON response with the result of the undo operation.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -87,7 +109,11 @@ def undo_action(history_id):
 @history_bp.route("/api/backup/create", methods=["POST"])
 @login_required
 def create_backup():
-    """Create a backup of all contacts"""
+    """Create a backup of all contacts.
+
+    Returns:
+        A JSON response with the created backup.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -114,7 +140,11 @@ def create_backup():
 @history_bp.route("/api/backup/list", methods=["GET"])
 @login_required
 def list_backups():
-    """List all backups for the current user"""
+    """List all backups for the current user.
+
+    Returns:
+        A JSON response with a list of backups.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -133,7 +163,14 @@ def list_backups():
 @history_bp.route("/api/backup/restore/<int:backup_id>", methods=["POST"])
 @login_required
 def restore_backup(backup_id):
-    """Restore contacts from a backup"""
+    """Restore contacts from a backup.
+
+    Args:
+        backup_id: The ID of the backup to restore.
+
+    Returns:
+        A JSON response with the result of the restore operation.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)

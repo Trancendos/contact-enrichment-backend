@@ -7,6 +7,15 @@ enrichment_bp = Blueprint("enrichment", __name__)
 @enrichment_bp.route("/enrich_contact", methods=["POST"])
 @login_required
 def enrich_contact():
+    """Enriches a contact's data using an external service.
+
+    This endpoint receives contact information, sends it to the Explorium
+    service for enrichment, and returns the enhanced data.
+
+    Returns:
+        A JSON response containing the enriched contact data or an
+        error message if the process fails.
+    """
     user_id = g.user_id # Assuming user_id is set in g by login_required
     data = request.get_json()
     contact = data.get("contact")
