@@ -33,10 +33,10 @@ class ContactAIPredictor:
         max_score = 0.0
         
         # Name similarity
-        max_score += 30
         name1 = contact1.get('fullName', '').lower()
         name2 = contact2.get('fullName', '').lower()
         if name1 and name2:
+            max_score += 30
             if name1 == name2:
                 score += 30
             elif name1 in name2 or name2 in name1:
@@ -45,37 +45,36 @@ class ContactAIPredictor:
                 score += 15
         
         # Email overlap
-        max_score += 25
         emails1 = set([e.get('value', '').lower() for e in contact1.get('emails', []) if e.get('value')])
         emails2 = set([e.get('value', '').lower() for e in contact2.get('emails', []) if e.get('value')])
         if emails1 and emails2:
+            max_score += 25
             overlap = len(emails1 & emails2)
             if overlap > 0:
                 score += 25
-            elif self._same_domain(emails1, emails2):
-                score += 10
         
         # Phone overlap
-        max_score += 25
         phones1 = set([p.get('value', '').replace(' ', '').replace('-', '') for p in contact1.get('phones', []) if p.get('value')])
         phones2 = set([p.get('value', '').replace(' ', '').replace('-', '') for p in contact2.get('phones', []) if p.get('value')])
         if phones1 and phones2:
+            max_score += 25
             overlap = len(phones1 & phones2)
             if overlap > 0:
                 score += 25
         
         # Organization match
-        max_score += 10
         org1 = contact1.get('organization', '').lower()
         org2 = contact2.get('organization', '').lower()
-        if org1 and org2 and org1 == org2:
-            score += 10
+        if org1 and org2:
+            max_score += 10
+            if org1 == org2:
+                score += 10
         
         # Related names overlap
-        max_score += 10
         related1 = set([r.lower() for r in contact1.get('relatedNames', [])])
         related2 = set([r.lower() for r in contact2.get('relatedNames', [])])
         if related1 and related2:
+            max_score += 10
             overlap = len(related1 & related2)
             if overlap > 0:
                 score += 10
