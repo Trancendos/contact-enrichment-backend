@@ -1,11 +1,28 @@
+"""
+Service for interacting with the Explorium MCP.
+
+This service provides methods for calling Explorium tools to enrich contact
+and business data.
+"""
 import os
 import json
 import subprocess
 from sqlalchemy.orm import Session
 from src.models.contact import Contact
 
+
 def call_explorium_tool(tool_name, input_data):
-    """Calls a specified Explorium MCP tool with the given input data."""
+    """
+    Call a specified Explorium MCP tool with the given input data.
+
+    Args:
+        tool_name (str): The name of the tool to call.
+        input_data (dict): The input data for the tool.
+
+    Returns:
+        dict: The JSON response from the tool, or an error dictionary if the
+            call fails.
+    """
     input_json = json.dumps(input_data)
     command = [
         "manus-mcp-cli",
@@ -33,13 +50,34 @@ def call_explorium_tool(tool_name, input_data):
         except:
             return {"error": "JSON decode error", "output": result.stdout}
 
+
 class ExploriumService:
+    """
+    A service for enriching contact data using the Explorium MCP.
+    """
+
     def __init__(self, db: Session, user_id: int):
+        """
+        Initialize the ExploriumService.
+
+        Args:
+            db (sqlalchemy.orm.Session): The database session.
+            user_id (int): The ID of the current user.
+        """
         self.db = db
         self.user_id = user_id
 
     def get_business_id(self, company_name=None, domain=None):
-        """Matches a company name or domain to get an Explorium business ID."""
+        """
+        Match a company name or domain to get an Explorium business ID.
+
+        Args:
+            company_name (str, optional): The name of the company. Defaults to None.
+            domain (str, optional): The domain of the company. Defaults to None.
+
+        Returns:
+            str: The Explorium business ID, or None if no match is found.
+        """
         if not company_name and not domain:
             return None
 
@@ -64,7 +102,18 @@ class ExploriumService:
         return None
 
     def enrich_contact_with_explorium(self, contact_data: dict):
-        """Enriches a contact with data from Explorium based on company and prospect info."""
+        """
+        Enrich a contact with data from Explorium.
+
+        This method enriches a contact with business and prospect data from
+        Explorium based on the contact's company name, email, and full name.
+
+        Args:
+            contact_data (dict): A dictionary of contact data.
+
+        Returns:
+            dict: A dictionary of enriched data from Explorium.
+        """
         enriched_data = {}
         company_name = contact_data.get("organization")
         # Assuming emails is a list of dicts, get the first valid email

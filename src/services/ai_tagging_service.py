@@ -1,3 +1,10 @@
+"""
+AI-powered tagging service.
+
+This service uses the OpenAI API to suggest relevant tags for contacts. It also
+provides a fallback to a rule-based system if the OpenAI library is not
+available.
+"""
 import os
 import json
 
@@ -8,8 +15,16 @@ except ImportError:
     OPENAI_AVAILABLE = False
     OpenAI = None
 
+
 class AITaggingService:
+    """
+    A service for suggesting tags for contacts using AI.
+    """
+
     def __init__(self):
+        """
+        Initialize the AITaggingService.
+        """
         if OPENAI_AVAILABLE and OpenAI:
             self.client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
         else:
@@ -18,12 +33,15 @@ class AITaggingService:
     def suggest_tags(self, contact_data):
         """
         Analyze contact data and suggest relevant tags using AI.
-        
+
+        If the OpenAI client is not available, this method will use a
+        rule-based fallback.
+
         Args:
-            contact_data: Dictionary containing contact information
-            
+            contact_data (dict): A dictionary containing contact information.
+
         Returns:
-            List of suggested tags
+            list: A list of suggested tags.
         """
         if not self.client:
             # Fallback to rule-based tagging if OpenAI is not available
@@ -97,12 +115,12 @@ Do not include tags that already exist."""
     def suggest_tags_batch(self, contacts):
         """
         Suggest tags for multiple contacts at once.
-        
+
         Args:
-            contacts: List of contact dictionaries
-            
+            contacts (list): A list of contact dictionaries.
+
         Returns:
-            Dictionary mapping contact IDs to suggested tags
+            dict: A dictionary mapping contact IDs to suggested tags.
         """
         results = {}
         for contact in contacts:
@@ -113,13 +131,13 @@ Do not include tags that already exist."""
     
     def _fallback_suggest_tags(self, contact_data):
         """
-        Rule-based fallback tagging when AI is not available.
-        
+        A rule-based fallback for suggesting tags when AI is not available.
+
         Args:
-            contact_data: Dictionary containing contact information
-            
+            contact_data (dict): A dictionary containing contact information.
+
         Returns:
-            List of suggested tags
+            list: A list of suggested tags based on a set of rules.
         """
         tags = []
         

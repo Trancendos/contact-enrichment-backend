@@ -6,14 +6,35 @@ import json
 from collections import defaultdict
 from datetime import datetime
 
+
 class ContactAIPredictor:
+    """
+    An AI-powered predictor for contact merging and splitting.
+
+    This class uses a set of heuristics to determine the probability of two
+    contacts being a match for merging, or a single contact being a candidate
+    for splitting. It also includes a feedback mechanism to learn from user
+    actions.
+    """
+
     def __init__(self):
+        """
+        Initialize the ContactAIPredictor.
+        """
         self.merge_patterns = defaultdict(int)  # Track approved merge patterns
         self.split_patterns = defaultdict(int)  # Track approved split patterns
         self.rejection_patterns = defaultdict(int)  # Track rejected suggestions
         
     def extract_contact_features(self, contact):
-        """Extract features from a contact for ML analysis"""
+        """
+        Extract features from a contact for ML analysis.
+
+        Args:
+            contact (dict): The contact to extract features from.
+
+        Returns:
+            dict: A dictionary of features.
+        """
         features = {
             'has_multiple_emails': len([e for e in contact.get('emails', []) if e.get('value')]) > 1,
             'has_multiple_phones': len([p for p in contact.get('phones', []) if p.get('value')]) > 1,
@@ -28,7 +49,16 @@ class ContactAIPredictor:
         return features
     
     def calculate_merge_probability(self, contact1, contact2):
-        """Calculate probability that two contacts should be merged"""
+        """
+        Calculate the probability that two contacts should be merged.
+
+        Args:
+            contact1 (dict): The first contact.
+            contact2 (dict): The second contact.
+
+        Returns:
+            float: The probability that the two contacts should be merged.
+        """
         score = 0.0
         max_score = 0.0
         
@@ -84,7 +114,15 @@ class ContactAIPredictor:
         return probability
     
     def calculate_split_probability(self, contact):
-        """Calculate probability that a contact should be split"""
+        """
+        Calculate the probability that a contact should be split.
+
+        Args:
+            contact (dict): The contact to analyze.
+
+        Returns:
+            float: The probability that the contact should be split.
+        """
         features = self.extract_contact_features(contact)
         score = 0.0
         
@@ -107,7 +145,16 @@ class ContactAIPredictor:
         return min(score, 1.0)
     
     def learn_from_feedback(self, suggestion_type, features, approved):
-        """Learn from user approval/rejection of suggestions"""
+        """
+        Learn from user approval/rejection of suggestions.
+
+        This method updates the internal patterns based on user feedback.
+
+        Args:
+            suggestion_type (str): The type of suggestion ('merge' or 'split').
+            features (dict): The features of the suggestion.
+            approved (bool): Whether the suggestion was approved by the user.
+        """
         feature_key = json.dumps(features, sort_keys=True)
         
         if approved:
@@ -119,7 +166,16 @@ class ContactAIPredictor:
             self.rejection_patterns[feature_key] += 1
     
     def _fuzzy_match(self, str1, str2):
-        """Simple fuzzy string matching"""
+        """
+        Simple fuzzy string matching.
+
+        Args:
+            str1 (str): The first string.
+            str2 (str): The second string.
+
+        Returns:
+            bool: Whether the strings are a fuzzy match.
+        """
         # Remove common prefixes/suffixes
         str1 = str1.replace('mr.', '').replace('mrs.', '').replace('dr.', '').strip()
         str2 = str2.replace('mr.', '').replace('mrs.', '').replace('dr.', '').strip()
@@ -135,7 +191,16 @@ class ContactAIPredictor:
         return False
     
     def _same_domain(self, emails1, emails2):
-        """Check if email sets share the same domain"""
+        """
+        Check if email sets share the same domain.
+
+        Args:
+            emails1 (set): The first set of email addresses.
+            emails2 (set): The second set of email addresses.
+
+        Returns:
+            bool: Whether the email sets share a domain.
+        """
         domains1 = set([e.split('@')[1] for e in emails1 if '@' in e])
         domains2 = set([e.split('@')[1] for e in emails2 if '@' in e])
         return len(domains1 & domains2) > 0

@@ -1,3 +1,10 @@
+"""
+Authentication routes for the Flask application.
+
+This module contains routes for user registration, login, logout, and
+retrieving the current user's information. It also includes placeholder
+routes for OAuth with Google and Apple.
+"""
 from flask import Blueprint, request, jsonify, session, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from src.models.user import User
@@ -5,8 +12,20 @@ import secrets
 
 auth_bp = Blueprint("auth", __name__)
 
+
 @auth_bp.route("/register", methods=["POST"])
 def register():
+    """
+    Register a new user.
+
+    This route expects a JSON body with 'email', 'password', and 'name' fields.
+    It creates a new user in the database and logs them in by creating a
+    session.
+
+    Returns:
+        A JSON response with a success message and user information, or an
+        error message if registration fails.
+    """
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
@@ -47,6 +66,16 @@ def register():
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
+    """
+    Log in a user.
+
+    This route expects a JSON body with 'email' and 'password' fields. It
+    verifies the user's credentials and creates a session if they are valid.
+
+    Returns:
+        A JSON response with a success message and user information, or an
+        error message if login fails.
+    """
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
@@ -76,11 +105,30 @@ def login():
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
+    """
+    Log out the current user.
+
+    This route clears the session, effectively logging the user out.
+
+    Returns:
+        A JSON response with a success message.
+    """
     session.clear()
     return jsonify({"success": True, "message": "Logged out successfully"})
 
+
 @auth_bp.route("/me", methods=["GET"])
 def get_current_user():
+    """
+    Get the current user's information.
+
+    This route retrieves the current user's information from the database
+    based on the user ID stored in the session.
+
+    Returns:
+        A JSON response with the user's information, or an error message if
+        the user is not authenticated.
+    """
     user_id = session.get("user_id")
     
     if not user_id:
@@ -102,6 +150,16 @@ def get_current_user():
 
 @auth_bp.route("/oauth/google", methods=["POST"])
 def google_oauth():
+    """
+    Placeholder for Google OAuth implementation.
+
+    This route is a placeholder for implementing Google OAuth. In a production
+    environment, this would verify a Google token and create or log in a user.
+
+    Returns:
+        A JSON response with a message indicating that the feature is not yet
+        implemented.
+    """
     # Placeholder for Google OAuth implementation
     # In production, this would verify the Google token and create/login user
     data = request.get_json()
@@ -116,6 +174,17 @@ def google_oauth():
 
 @auth_bp.route("/oauth/apple", methods=["POST"])
 def apple_oauth():
+    """
+    Placeholder for Apple Sign-In implementation.
+
+    This route is a placeholder for implementing Apple Sign-In. In a
+    production environment, this would verify an Apple token and create or
+    log in a user.
+
+    Returns:
+        A JSON response with a message indicating that the feature is not yet
+        implemented.
+    """
     # Placeholder for Apple Sign-In implementation
     # In production, this would verify the Apple token and create/login user
     data = request.get_json()

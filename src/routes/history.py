@@ -1,13 +1,28 @@
+"""
+History and backup routes for the Flask application.
+
+This module contains routes for retrieving contact and user history, as well
+as creating, listing, and restoring backups.
+"""
 from flask import Blueprint, request, jsonify, session, g
 from src.services.history_service import HistoryService
 from src.middleware.auth_middleware import login_required
 
 history_bp = Blueprint("history", __name__)
 
+
 @history_bp.route("/api/history/contact/<contact_id>", methods=["GET"])
 @login_required
 def get_contact_history(contact_id):
-    """Get history for a specific contact"""
+    """
+    Get history for a specific contact.
+
+    Args:
+        contact_id (str): The ID of the contact to get history for.
+
+    Returns:
+        A JSON response with a list of history records for the contact.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -26,7 +41,12 @@ def get_contact_history(contact_id):
 @history_bp.route("/api/history/user", methods=["GET"])
 @login_required
 def get_user_history():
-    """Get all history for the current user"""
+    """
+    Get all history for the current user.
+
+    Returns:
+        A JSON response with a list of history records for the current user.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -42,10 +62,19 @@ def get_user_history():
         print(f"Error in get_user_history: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
 @history_bp.route("/api/history/recent", methods=["GET"])
 @login_required
 def get_recent_actions():
-    """Get recent actions for the current user"""
+    """
+    Get recent actions for the current user.
+
+    This route accepts optional 'action_types' and 'limit' query parameters
+    to filter the results.
+
+    Returns:
+        A JSON response with a list of recent history records.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -69,7 +98,16 @@ def get_recent_actions():
 @history_bp.route("/api/history/undo/<int:history_id>", methods=["POST"])
 @login_required
 def undo_action(history_id):
-    """Undo a specific action"""
+    """
+    Undo a specific action.
+
+    Args:
+        history_id (int): The ID of the history record to undo.
+
+    Returns:
+        A JSON response with a success message, or an error message if the
+        undo operation fails.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -87,7 +125,16 @@ def undo_action(history_id):
 @history_bp.route("/api/backup/create", methods=["POST"])
 @login_required
 def create_backup():
-    """Create a backup of all contacts"""
+    """
+    Create a backup of all contacts.
+
+    This route expects a JSON body with a 'contacts' field, which is a list
+    of contact objects to back up.
+
+    Returns:
+        A JSON response with the newly created backup, or an error message if
+        the backup fails.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -114,7 +161,12 @@ def create_backup():
 @history_bp.route("/api/backup/list", methods=["GET"])
 @login_required
 def list_backups():
-    """List all backups for the current user"""
+    """
+    List all backups for the current user.
+
+    Returns:
+        A JSON response with a list of backups.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)
@@ -130,10 +182,20 @@ def list_backups():
         print(f"Error in list_backups: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
 @history_bp.route("/api/backup/restore/<int:backup_id>", methods=["POST"])
 @login_required
 def restore_backup(backup_id):
-    """Restore contacts from a backup"""
+    """
+    Restore contacts from a backup.
+
+    Args:
+        backup_id (int): The ID of the backup to restore.
+
+    Returns:
+        A JSON response with a success message, or an error message if the
+        restore operation fails.
+    """
     user_id = g.user_id
     try:
         service = HistoryService(g.db, user_id)

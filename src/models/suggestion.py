@@ -1,9 +1,30 @@
+"""
+SQLAlchemy model for a suggestion.
+"""
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .base import Base
 
+
 class Suggestion(Base):
+    """
+    Represents a suggestion for updating a contact's information.
+
+    Attributes:
+        id (int): The unique identifier for the suggestion.
+        user_id (int): The ID of the user who owns this suggestion.
+        contact_id (str): The ID of the contact this suggestion is for.
+        field_name (str): The name of the contact field to be updated.
+        current_value (str): The current value of the field.
+        suggested_value (str): The suggested new value for the field.
+        confidence (float): The confidence score of the suggestion.
+        source (str): The source of the suggestion (e.g., 'user', 'ai').
+        status (str): The status of the suggestion (e.g., 'pending', 'accepted', 'rejected').
+        created_at (datetime): The timestamp when the suggestion was created.
+        updated_at (datetime): The timestamp when the suggestion was last updated.
+        user (User): The user who owns this suggestion.
+    """
     __tablename__ = 'suggestions'
 
     id = Column(Integer, primary_key=True)
@@ -21,9 +42,21 @@ class Suggestion(Base):
     user = relationship('User', backref='suggestions')
 
     def __repr__(self):
+        """
+        Return a string representation of the Suggestion object.
+
+        Returns:
+            str: A string representation of the Suggestion object.
+        """
         return f'<Suggestion {self.id} for contact {self.contact_id}>'
 
     def to_dict(self):
+        """
+        Convert the Suggestion object to a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the Suggestion object.
+        """
         return {
             'id': self.id,
             'user_id': self.user_id,

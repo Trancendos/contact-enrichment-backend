@@ -1,3 +1,9 @@
+"""
+AI-powered suggestion routes for the Flask application.
+
+This module contains routes for generating, listing, approving, and rejecting
+contact suggestions.
+"""
 from flask import Blueprint, request, jsonify, session, g
 from src.models.suggestion import Suggestion
 from src.models.contact import Contact
@@ -8,8 +14,24 @@ import random
 
 suggestions_bp = Blueprint("suggestions", __name__)
 
+
 def generate_ai_suggestions(contacts, user_id, db_session):
-    """Generate AI-powered suggestions for contacts using predictor, NLU, and Explorium data"""
+    """
+    Generate AI-powered suggestions for contacts.
+
+    This function uses various services to generate suggestions for a list of
+    contacts. It uses the NLU service to analyze contact notes, the Explorium
+    service to enrich contact data, and an AI predictor to suggest splitting
+    or merging contacts.
+
+    Args:
+        contacts (list): A list of contact dictionaries to generate suggestions for.
+        user_id (int): The ID of the user who owns the contacts.
+        db_session (sqlalchemy.orm.Session): The database session.
+
+    Returns:
+        list: A list of Suggestion objects.
+    """
     suggestions = []
     explorium_service_instance = ExploriumService(db_session, user_id)
 
@@ -118,7 +140,17 @@ def generate_ai_suggestions(contacts, user_id, db_session):
 
 @suggestions_bp.route("/analyze", methods=["POST"])
 def analyze_contacts():
-    """Analyze contacts and generate suggestions"""
+    """
+    Analyze contacts and generate suggestions.
+
+    This route expects a JSON body with a 'contacts' field, which is a list
+    of contact objects to analyze. It clears any existing pending suggestions
+    for the user and then generates new ones.
+
+    Returns:
+        A JSON response with a success message and the number of suggestions
+        generated.
+    """
     user_id = session.get("user_id")
     
     if not user_id:
@@ -148,9 +180,18 @@ def analyze_contacts():
         "suggestions_count": len(suggestions)
     })
 
+
 @suggestions_bp.route("/list", methods=["GET"])
 def list_suggestions():
-    """Get all pending suggestions for the current user"""
+    """
+    Get all pending suggestions for the current user.
+
+    This route accepts an optional 'status' query parameter to filter the
+    suggestions.
+
+    Returns:
+        A JSON response with a list of suggestions.
+    """
     user_id = session.get("user_id")
     
     if not user_id:
@@ -167,7 +208,15 @@ def list_suggestions():
 
 @suggestions_bp.route("/<int:suggestion_id>/approve", methods=["POST"])
 def approve_suggestion(suggestion_id):
-    """Approve a suggestion and learn from feedback"""
+    """
+    Approve a suggestion and learn from feedback.
+
+    Args:
+        suggestion_id (int): The ID of the suggestion to approve.
+
+    Returns:
+        A JSON response with a success message and the approved suggestion.
+    """
     user_id = session.get("user_id")
     
     if not user_id:
@@ -194,9 +243,18 @@ def approve_suggestion(suggestion_id):
         "suggestion": suggestion.to_dict()
     })
 
+
 @suggestions_bp.route("/<int:suggestion_id>/reject", methods=["POST"])
 def reject_suggestion(suggestion_id):
-    """Reject a suggestion and learn from feedback"""
+    """
+    Reject a suggestion and learn from feedback.
+
+    Args:
+        suggestion_id (int): The ID of the suggestion to reject.
+
+    Returns:
+        A JSON response with a success message and the rejected suggestion.
+    """
     user_id = session.get("user_id")
     
     if not user_id:
@@ -225,7 +283,16 @@ def reject_suggestion(suggestion_id):
 
 @suggestions_bp.route("/bulk_action", methods=["POST"])
 def bulk_action():
-    """Approve or reject multiple suggestions at once"""
+    """
+    Approve or reject multiple suggestions at once.
+
+    This route expects a JSON body with a 'suggestion_ids' field (a list of
+    suggestion IDs) and an 'action' field ('approve' or 'reject').
+
+    Returns:
+        A JSON response with a success message and the number of suggestions
+        affected.
+    """
     user_id = session.get("user_id")
     
     if not user_id:

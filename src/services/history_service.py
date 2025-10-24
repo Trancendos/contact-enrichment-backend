@@ -1,28 +1,49 @@
+"""
+Service for managing contact history and backups.
+
+This service provides methods for logging contact actions, retrieving history,
+undoing actions, and creating and retrieving backups.
+"""
 from sqlalchemy.orm import Session
 import json
 from datetime import datetime
 from src.models.contact_history import ContactHistory
 
+
 class HistoryService:
-    """Service for logging contact changes and managing history"""
+    """
+    A service for managing contact history and backups.
+    """
+
     def __init__(self, db_session: Session):
+        """
+        Initialize the HistoryService.
+
+        Args:
+            db_session (sqlalchemy.orm.Session): The database session.
+        """
         self.db_session = db_session
 
     def log_action(self, user_id, contact_id, action_type, before_data=None, after_data=None, description=None, request_info=None):
         """
         Log a contact action to the history database.
-        
+
         Args:
-            user_id: ID of the user performing the action
-            contact_id: ID of the contact being modified
-            action_type: Type of action ("create", "update", "delete", "split", "merge")
-            before_data: Contact data before the change (dict)
-            after_data: Contact data after the change (dict)
-            description: Human-readable description of the change
-            request_info: Dictionary containing request information (e.g., IP, user agent)
-            
+            user_id (int): The ID of the user performing the action.
+            contact_id (str): The ID of the contact being modified.
+            action_type (str): The type of action (e.g., "create", "update").
+            before_data (dict, optional): The contact data before the change.
+                Defaults to None.
+            after_data (dict, optional): The contact data after the change.
+                Defaults to None.
+            description (str, optional): A human-readable description of the
+                change. Defaults to None.
+            request_info (dict, optional): Information about the request
+                that triggered the action. Defaults to None.
+
         Returns:
-            ContactHistory object
+            ContactHistory: The newly created ContactHistory object, or None
+                if an error occurred.
         """
         try:
             history_entry = ContactHistory(
@@ -47,15 +68,16 @@ class HistoryService:
     
     def get_contact_history(self, user_id, contact_id, limit=50):
         """
-        Get history for a specific contact.
-        
+        Get the history for a specific contact.
+
         Args:
-            user_id: ID of the user
-            contact_id: ID of the contact
-            limit: Maximum number of history entries to return
-            
+            user_id (int): The ID of the user.
+            contact_id (str): The ID of the contact.
+            limit (int, optional): The maximum number of history entries to
+                return. Defaults to 50.
+
         Returns:
-            List of ContactHistory objects
+            list: A list of contact history dictionaries.
         """
         try:
             history = self.db_session.query(ContactHistory).filter_by(
@@ -71,13 +93,14 @@ class HistoryService:
     def get_user_history(self, user_id, limit=100):
         """
         Get all history for a user.
-        
+
         Args:
-            user_id: ID of the user
-            limit: Maximum number of history entries to return
-            
+            user_id (int): The ID of the user.
+            limit (int, optional): The maximum number of history entries to
+                return. Defaults to 100.
+
         Returns:
-            List of ContactHistory objects
+            list: A list of contact history dictionaries.
         """
         try:
             history = self.db_session.query(ContactHistory).filter_by(
@@ -92,14 +115,16 @@ class HistoryService:
     def get_recent_actions(self, user_id, action_types=None, limit=20):
         """
         Get recent actions for a user, optionally filtered by action type.
-        
+
         Args:
-            user_id: ID of the user
-            action_types: List of action types to filter by (optional)
-            limit: Maximum number of history entries to return
-            
+            user_id (int): The ID of the user.
+            action_types (list, optional): A list of action types to filter
+                by. Defaults to None.
+            limit (int, optional): The maximum number of history entries to
+                return. Defaults to 20.
+
         Returns:
-            List of ContactHistory objects
+            list: A list of contact history dictionaries.
         """
         try:
             query = self.db_session.query(ContactHistory).filter_by(user_id=user_id)

@@ -1,13 +1,38 @@
+"""
+SQLAlchemy model for a contact.
+"""
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.sqlite import JSON
 from .base import Base
 
+
 class Contact(Base):
+    """
+    Represents a contact in the database.
+
+    Attributes:
+        id (str): The unique identifier for the contact (UUID).
+        user_id (int): The ID of the user who owns this contact.
+        full_name (str): The full name of the contact.
+        first_name (str): The first name of the contact.
+        last_name (str): The last name of the contact.
+        organization (str): The organization the contact belongs to.
+        title (str): The job title of the contact.
+        emails (list): A list of email addresses associated with the contact.
+        phones (list): A list of phone numbers associated with the contact.
+        notes (str): Any notes about the contact.
+        tags (list): A list of tags associated with the contact.
+        related_names (list): A list of related names for merged contacts.
+        explorium_data (dict): Enriched data from the Explorium service.
+        created_at (datetime): The timestamp when the contact was created.
+        updated_at (datetime): The timestamp when the contact was last updated.
+        user (User): The user who owns this contact.
+    """
     __tablename__ = 'contacts'
 
-    id = Column(String, primary_key=True, index=True) # UUID as string
+    id = Column(String, primary_key=True, index=True)  # UUID as string
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     full_name = Column(String, index=True)
     first_name = Column(String, nullable=True)
@@ -26,9 +51,21 @@ class Contact(Base):
     user = relationship('User', back_populates='contacts')
 
     def __repr__(self):
+        """
+        Return a string representation of the Contact object.
+
+        Returns:
+            str: A string representation of the Contact object.
+        """
         return f"<Contact(id='{self.id}', full_name='{self.full_name}')>"
 
     def to_dict(self):
+        """
+        Convert the Contact object to a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the Contact object.
+        """
         return {
             "id": self.id,
             "user_id": self.user_id,

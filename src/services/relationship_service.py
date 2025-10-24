@@ -1,16 +1,51 @@
+"""
+Service for managing relationships between contacts.
+
+This service provides methods for creating, retrieving, updating, and deleting
+relationships between contacts.
+"""
 from sqlalchemy.orm import Session
 from src.models.contact_relationship import ContactRelationship
 from src.models.contact import Contact
 from src.models.user import User
 from src.services.history_service import HistoryService
 
+
 class RelationshipService:
+    """
+    A service for managing relationships between contacts.
+    """
+
     def __init__(self, db: Session, user_id: int):
+        """
+        Initialize the RelationshipService.
+
+        Args:
+            db (sqlalchemy.orm.Session): The database session.
+            user_id (int): The ID of the current user.
+        """
         self.db = db
         self.user_id = user_id
         self.history_service = HistoryService(db, user_id)
 
     def create_relationship(self, contact_id_1: str, contact_id_2: str, relationship_type: str, description: str = None):
+        """
+        Create a new relationship between two contacts.
+
+        Args:
+            contact_id_1 (str): The ID of the first contact.
+            contact_id_2 (str): The ID of the second contact.
+            relationship_type (str): The type of relationship.
+            description (str, optional): A description of the relationship.
+                Defaults to None.
+
+        Raises:
+            ValueError: If the contacts are the same, not found, or a
+                relationship already exists between them.
+
+        Returns:
+            ContactRelationship: The newly created relationship.
+        """
         if contact_id_1 == contact_id_2:
             raise ValueError("Cannot create a relationship with the same contact.")
 
@@ -57,6 +92,15 @@ class RelationshipService:
         return relationship
 
     def get_relationships_for_contact(self, contact_id: str):
+        """
+        Get all relationships for a specific contact.
+
+        Args:
+            contact_id (str): The ID of the contact.
+
+        Returns:
+            list: A list of relationships for the contact.
+        """
         relationships = self.db.query(ContactRelationship).filter(
             ((ContactRelationship.contact_id_1 == contact_id) | (ContactRelationship.contact_id_2 == contact_id))
             & (ContactRelationship.user_id == self.user_id)
@@ -64,6 +108,19 @@ class RelationshipService:
         return relationships
 
     def delete_relationship(self, relationship_id: int):
+        """
+        Delete a relationship.
+
+        Args:
+            relationship_id (int): The ID of the relationship to delete.
+
+        Raises:
+            ValueError: If the relationship is not found or does not belong
+                to the user.
+
+        Returns:
+            dict: A success message.
+        """
         relationship = self.db.query(ContactRelationship).filter(
             ContactRelationship.id == relationship_id,
             ContactRelationship.user_id == self.user_id
@@ -98,6 +155,23 @@ class RelationshipService:
         return {"message": "Relationship deleted successfully"}
 
     def update_relationship(self, relationship_id: int, new_type: str = None, new_description: str = None):
+        """
+        Update an existing relationship.
+
+        Args:
+            relationship_id (int): The ID of the relationship to update.
+            new_type (str, optional): The new type for the relationship.
+                Defaults to None.
+            new_description (str, optional): The new description for the
+                relationship. Defaults to None.
+
+        Raises:
+            ValueError: If the relationship is not found or does not belong
+                to the user.
+
+        Returns:
+            ContactRelationship: The updated relationship.
+        """
         relationship = self.db.query(ContactRelationship).filter(
             ContactRelationship.id == relationship_id,
             ContactRelationship.user_id == self.user_id

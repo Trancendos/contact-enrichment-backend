@@ -109,14 +109,66 @@ In production, the application:
 - Serves static frontend files from the `/static` directory
 - Enforces HTTPS and security best practices
 
+## Architecture Overview
+
+The application is a monolithic Flask backend with a modular structure. The code is organized into the following directories:
+
+- `src/models`: Contains SQLAlchemy models for all database tables.
+- `src/routes`: Defines the API endpoints and handles incoming requests.
+- `src/services`: Contains the business logic for the application.
+- `src/middleware`: Contains middleware for handling authentication and database sessions.
+
 ## API Endpoints
 
-- `/api/auth/*` - Authentication endpoints
-- `/api/enrichment/*` - Contact enrichment endpoints
-- `/api/suggestions/*` - Contact suggestions
-- `/api/tagging/*` - AI tagging endpoints
-- `/api/history/*` - Contact history
-- `/api/*` - Contact and user management
+### Authentication
+
+- `POST /api/auth/register`: Register a new user.
+- `POST /api/auth/login`: Log in a user.
+- `POST /api/auth/logout`: Log out the current user.
+- `GET /api/auth/me`: Get the current user's information.
+
+### Contact Management
+
+- `POST /api/contacts`: Create a new contact.
+- `PUT /api/contacts/<contact_id>`: Update an existing contact.
+- `DELETE /api/contacts/<contact_id>`: Delete a contact.
+- `POST /api/contacts/split_phone`: Split a phone number from a contact into a new contact.
+- `POST /api/contacts/split_all`: Split all phone numbers and emails from a contact into new contacts.
+- `POST /api/contacts/merge`: Merge multiple contacts into a single contact.
+
+### Contact Enrichment
+
+- `POST /api/enrich_contact`: Enrich a contact's information using the Explorium service.
+
+### Suggestions
+
+- `POST /api/suggestions/analyze`: Analyze contacts and generate suggestions.
+- `GET /api/suggestions/list`: Get all pending suggestions for the current user.
+- `POST /api/suggestions/<suggestion_id>/approve`: Approve a suggestion.
+- `POST /api/suggestions/<suggestion_id>/reject`: Reject a suggestion.
+- `POST /api/suggestions/bulk_action`: Approve or reject multiple suggestions at once.
+
+### Tagging
+
+- `POST /api/tagging/suggest_tags`: Suggest tags for a contact using AI.
+- `POST /api/tagging/suggest_tags_batch`: Suggest tags for multiple contacts using AI.
+
+### History and Backups
+
+- `GET /api/history/contact/<contact_id>`: Get the history for a specific contact.
+- `GET /api/history/user`: Get all history for the current user.
+- `GET /api/history/recent`: Get recent actions for the current user.
+- `POST /api/history/undo/<history_id>`: Undo a specific action.
+- `POST /api/backup/create`: Create a backup of all contacts.
+- `GET /api/backup/list`: List all backups for the current user.
+- `POST /api/backup/restore/<backup_id>`: Restore contacts from a backup.
+
+### Relationships
+
+- `POST /api/relationships`: Create a new relationship between two contacts.
+- `GET /api/relationships/<contact_id>`: Get all relationships for a specific contact.
+- `PUT /api/relationships/<relationship_id>`: Update an existing relationship.
+- `DELETE /api/relationships/<relationship_id>`: Delete a relationship.
 
 ## Technology Stack
 

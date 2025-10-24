@@ -5,8 +5,19 @@ Extracts entities like names, companies, dates, and relationships from notes.
 import re
 from datetime import datetime
 
+
 class ContactNLUService:
+    """
+    A service for Natural Language Understanding of contact notes.
+
+    This service provides methods for extracting entities like names,
+    companies, dates, and relationships from unstructured text.
+    """
+
     def __init__(self):
+        """
+        Initialize the ContactNLUService.
+        """
         # Common relationship indicators
         self.relationship_keywords = {
             'family': ['wife', 'husband', 'son', 'daughter', 'brother', 'sister', 'mother', 'father', 'parent', 'child', 'spouse', 'partner'],
@@ -18,7 +29,15 @@ class ContactNLUService:
         self.company_indicators = ['inc', 'llc', 'ltd', 'corp', 'corporation', 'company', 'co', 'group', 'enterprises']
         
     def analyze_note(self, note_text):
-        """Analyze a contact note and extract structured information"""
+        """
+        Analyze a contact note and extract structured information.
+
+        Args:
+            note_text (str): The text of the contact note.
+
+        Returns:
+            dict: A dictionary of extracted entities.
+        """
         if not note_text:
             return {}
         
@@ -37,7 +56,15 @@ class ContactNLUService:
         return analysis
     
     def extract_names(self, text):
-        """Extract potential person names from text"""
+        """
+        Extract potential person names from text.
+
+        Args:
+            text (str): The text to extract names from.
+
+        Returns:
+            list: A list of potential names.
+        """
         # Simple pattern: Capitalized words (2-3 words)
         pattern = r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b'
         matches = re.findall(pattern, text)
@@ -51,7 +78,15 @@ class ContactNLUService:
         return list(set(filtered))
     
     def extract_companies(self, text):
-        """Extract company names from text"""
+        """
+        Extract company names from text.
+
+        Args:
+            text (str): The text to extract company names from.
+
+        Returns:
+            list: A list of company names.
+        """
         companies = []
         
         # Pattern 1: Words ending with company indicators
@@ -68,7 +103,15 @@ class ContactNLUService:
         return list(set([c.strip() for c in companies]))
     
     def extract_dates(self, text):
-        """Extract dates from text"""
+        """
+        Extract dates from text.
+
+        Args:
+            text (str): The text to extract dates from.
+
+        Returns:
+            list: A list of dates.
+        """
         dates = []
         
         # Pattern 1: MM/DD/YYYY or DD/MM/YYYY
@@ -86,7 +129,16 @@ class ContactNLUService:
         return list(set(dates))
     
     def extract_relationships(self, text):
-        """Extract relationship information from text"""
+        """
+        Extract relationship information from text.
+
+        Args:
+            text (str): The text to extract relationships from.
+
+        Returns:
+            list: A list of dictionaries, where each dictionary represents a
+                relationship.
+        """
         relationships = []
         text_lower = text.lower()
         
@@ -107,12 +159,28 @@ class ContactNLUService:
         return relationships
     
     def extract_emails(self, text):
-        """Extract email addresses from text"""
+        """
+        Extract email addresses from text.
+
+        Args:
+            text (str): The text to extract email addresses from.
+
+        Returns:
+            list: A list of email addresses.
+        """
         pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         return list(set(re.findall(pattern, text)))
     
     def extract_phones(self, text):
-        """Extract phone numbers from text"""
+        """
+        Extract phone numbers from text.
+
+        Args:
+            text (str): The text to extract phone numbers from.
+
+        Returns:
+            list: A list of phone numbers.
+        """
         # Pattern for various phone formats
         patterns = [
             r'\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b',  # 123-456-7890
@@ -127,7 +195,15 @@ class ContactNLUService:
         return list(set(phones))
     
     def extract_locations(self, text):
-        """Extract location information from text"""
+        """
+        Extract location information from text.
+
+        Args:
+            text (str): The text to extract locations from.
+
+        Returns:
+            list: A list of locations.
+        """
         locations = []
         
         # Pattern 1: City, State
@@ -143,7 +219,16 @@ class ContactNLUService:
         return list(set(locations))
     
     def analyze_sentiment(self, text):
-        """Analyze sentiment of the note"""
+        """
+        Analyze the sentiment of the note.
+
+        Args:
+            text (str): The text to analyze.
+
+        Returns:
+            str: The sentiment of the text ('positive', 'negative', or
+                'neutral').
+        """
         positive_words = ['great', 'excellent', 'good', 'wonderful', 'amazing', 'fantastic', 'helpful', 'friendly', 'professional', 'reliable']
         negative_words = ['bad', 'poor', 'terrible', 'awful', 'difficult', 'problematic', 'unreliable', 'unprofessional', 'rude']
         
@@ -159,7 +244,15 @@ class ContactNLUService:
             return 'neutral'
     
     def extract_keywords(self, text):
-        """Extract important keywords from text"""
+        """
+        Extract important keywords from text.
+
+        Args:
+            text (str): The text to extract keywords from.
+
+        Returns:
+            list: A list of the top 10 keywords.
+        """
         # Remove common stop words
         stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can'}
         
@@ -177,7 +270,16 @@ class ContactNLUService:
         return [word for word, freq in sorted_keywords[:10]]
     
     def generate_suggestions_from_analysis(self, contact, analysis):
-        """Generate actionable suggestions based on NLU analysis"""
+        """
+        Generate actionable suggestions based on NLU analysis.
+
+        Args:
+            contact (dict): The contact to generate suggestions for.
+            analysis (dict): The NLU analysis of the contact's notes.
+
+        Returns:
+            list: A list of suggestions.
+        """
         suggestions = []
         
         # Suggest adding extracted emails

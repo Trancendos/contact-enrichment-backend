@@ -1,3 +1,11 @@
+"""
+Main application file for the Flask-based Contact Enrichment Backend.
+
+This file initializes the Flask application, configures the database connection,
+registers blueprints for different API routes, and defines middleware for
+managing database sessions. It also includes a catch-all route to serve the
+static frontend application.
+"""
 import os
 import sys
 from sqlalchemy import create_engine
@@ -42,6 +50,16 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Dependency to get DB session
 def get_db():
+    """
+    A generator function that provides a database session for a request.
+
+    This function is used as a dependency in API endpoints to get a database
+    session. It ensures that the session is properly closed after the request
+    is finished.
+
+    Yields:
+        sqlalchemy.orm.Session: The database session.
+    """
     db_session = SessionLocal()
     try:
         yield db_session
@@ -50,10 +68,28 @@ def get_db():
 
 @app.before_request
 def before_request():
+    """
+    Middleware to create a new database session before each request.
+
+    This function is executed before each request to the application. It creates
+    a new database session and stores it in the Flask global object `g`.
+    """
     g.db = SessionLocal()
 
 @app.after_request
 def after_request(response):
+    """
+    Middleware to close the database session after each request.
+
+    This function is executed after each request. It checks if a database
+    session exists in the Flask global object `g` and closes it if it does.
+
+    Args:
+        response (flask.Response): The response object to be sent to the client.
+
+    Returns:
+        flask.Response: The same response object.
+    """
     if hasattr(g, 'db'):
         g.db.close()
     return response
@@ -70,6 +106,20 @@ app.register_blueprint(relationship_bp, url_prefix='/api')
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
+    """
+    Serve the static frontend application.
+
+    This is a catch-all route that serves the static files for the frontend
+    application. If a requested path exists in the static folder, it serves
+    that file. Otherwise, it serves the `index.html` file, which allows the
+    frontend to handle routing.
+
+    Args:
+        path (str): The path to the file to serve.
+
+    Returns:
+        flask.Response: The requested file or `index.html`.
+    """
     static_folder_path = app.static_folder
     if static_folder_path is None:
             return "Static folder not configured", 404

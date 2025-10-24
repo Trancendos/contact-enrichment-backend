@@ -1,13 +1,27 @@
+"""
+AI-powered tagging routes for the Flask application.
+
+This module contains routes for suggesting tags for single or multiple
+contacts using an AI tagging service.
+"""
 from flask import Blueprint, request, jsonify, session, g
 from src.services.ai_tagging_service import AITaggingService
 from src.middleware.auth_middleware import login_required
 
 tagging_bp = Blueprint("tagging", __name__)
 
+
 @tagging_bp.route("/api/suggest_tags", methods=["POST"])
 @login_required
 def suggest_tags():
-    """Suggest tags for a contact using AI"""
+    """
+    Suggest tags for a contact using AI.
+
+    This route expects a JSON body with a 'contact' object.
+
+    Returns:
+        A JSON response with a list of suggested tags.
+    """
     user_id = g.user_id
     try:
         data = request.get_json()
@@ -31,7 +45,15 @@ def suggest_tags():
 @tagging_bp.route("/api/suggest_tags_batch", methods=["POST"])
 @login_required
 def suggest_tags_batch():
-    """Suggest tags for multiple contacts using AI"""
+    """
+    Suggest tags for multiple contacts using AI.
+
+    This route expects a JSON body with a 'contacts' field, which is a list
+    of contact objects.
+
+    Returns:
+        A JSON response with a list of suggestions for each contact.
+    """
     user_id = g.user_id
     try:
         data = request.get_json()
