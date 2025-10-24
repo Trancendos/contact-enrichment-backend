@@ -19,26 +19,13 @@ def create_user():
 
 @user_bp.route("/users/<int:user_id>", methods=["GET"])
 def get_user(user_id):
-    user = g.db.query(User).filter(User.id == user_id).first()
-    if user is None:
-        return jsonify({'error': 'User not found'}), 404
+    user = g.db.query(User).filter(User.id == user_id).first_or_404()
     return jsonify(user.to_dict())
 
 @user_bp.route("/users/<int:user_id>", methods=["PUT"])
 def update_user(user_id):
-    user = g.db.query(User).filter(User.id == user_id).first()
-    if user is None:
-        return jsonify({'error': 'User not found'}), 404
+    user = g.db.query(User).filter(User.id == user_id).first_or_404()
     data = request.json
-
-    if 'username' in data and data['username'] != user.username:
-        if g.db.query(User).filter(User.username == data['username']).first():
-            return jsonify({'error': 'Username already taken'}), 409
-
-    if 'email' in data and data['email'] != user.email:
-        if g.db.query(User).filter(User.email == data['email']).first():
-            return jsonify({'error': 'Email already taken'}), 409
-
     user.username = data.get("username", user.username)
     user.email = data.get("email", user.email)
     user.name = data.get("name", user.name)
@@ -48,9 +35,7 @@ def update_user(user_id):
 
 @user_bp.route("/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
-    user = g.db.query(User).filter(User.id == user_id).first()
-    if user is None:
-        return jsonify({'error': 'User not found'}), 404
+    user = g.db.query(User).filter(User.id == user_id).first_or_404()
     g.db.delete(user)
     g.db.commit()
     return "", 204
