@@ -19,12 +19,16 @@ def create_user():
 
 @user_bp.route("/users/<int:user_id>", methods=["GET"])
 def get_user(user_id):
-    user = g.db.query(User).filter(User.id == user_id).first_or_404()
+    user = g.db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
     return jsonify(user.to_dict())
 
 @user_bp.route("/users/<int:user_id>", methods=["PUT"])
 def update_user(user_id):
-    user = g.db.query(User).filter(User.id == user_id).first_or_404()
+    user = g.db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
     data = request.json
     user.username = data.get("username", user.username)
     user.email = data.get("email", user.email)
@@ -35,7 +39,9 @@ def update_user(user_id):
 
 @user_bp.route("/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
-    user = g.db.query(User).filter(User.id == user_id).first_or_404()
+    user = g.db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
     g.db.delete(user)
     g.db.commit()
     return "", 204

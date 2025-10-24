@@ -31,10 +31,14 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'asdf#FGSgvasgf$5$WGT')
 CORS(app, supports_credentials=True) # Enable CORS for all routes with credentials
 
 # Database setup
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-DATABASE_URL = f"{SUPABASE_URL}/rest/v1/?apikey={SUPABASE_KEY}"
-engine = create_engine(f"postgresql://postgres:{SUPABASE_KEY}@{SUPABASE_URL.replace('https://', '').split('.')[0]}.supabase.co:5432/postgres")
+engine = None
+if os.environ.get("TESTING"):
+    engine = create_engine("sqlite:///:memory:")
+else:
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+    DATABASE_URL = f"{SUPABASE_URL}/rest/v1/?apikey={SUPABASE_KEY}"
+    engine = create_engine(f"postgresql://postgres:{SUPABASE_KEY}@{SUPABASE_URL.replace('https://', '').split('.')[0]}.supabase.co:5432/postgres")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create tables
