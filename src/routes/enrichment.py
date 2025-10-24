@@ -4,10 +4,11 @@ from src.middleware.auth_middleware import login_required
 
 enrichment_bp = Blueprint("enrichment", __name__)
 
+
 @enrichment_bp.route("/enrich_contact", methods=["POST"])
 @login_required
 def enrich_contact():
-    user_id = g.user_id # Assuming user_id is set in g by login_required
+    user_id = g.user_id  # Assuming user_id is set in g by login_required
     data = request.get_json()
     contact = data.get("contact")
 
@@ -19,9 +20,16 @@ def enrich_contact():
         enriched_data = service.enrich_contact_with_explorium(contact)
 
         if enriched_data.get("error"):
-            return jsonify({"error": "Failed to enrich contact", "details": enriched_data["error"]}), 500
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to enrich contact",
+                        "details": enriched_data["error"],
+                    }
+                ),
+                500,
+            )
 
         return jsonify({"success": True, "enriched_data": enriched_data})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-

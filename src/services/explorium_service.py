@@ -1,8 +1,7 @@
-import os
 import json
 import subprocess
 from sqlalchemy.orm import Session
-from src.models.contact import Contact
+
 
 def call_explorium_tool(tool_name, input_data):
     """Calls a specified Explorium MCP tool with the given input data."""
@@ -15,7 +14,7 @@ def call_explorium_tool(tool_name, input_data):
         "--server",
         "explorium",
         "--input",
-        input_json
+        input_json,
     ]
     try:
         result = subprocess.run(command, capture_output=True, text=True, check=True)
@@ -30,8 +29,9 @@ def call_explorium_tool(tool_name, input_data):
         # Attempt to parse partial JSON or return raw output if it's not JSON
         try:
             return json.loads(result.stdout)
-        except:
+        except Exception:
             return {"error": "JSON decode error", "output": result.stdout}
+
 
 class ExploriumService:
     def __init__(self, db: Session, user_id: int):
@@ -56,7 +56,7 @@ class ExploriumService:
 
         input_data = {
             "businesses_to_match": businesses_to_match,
-            "tool_reasoning": f"Get business ID for company: {company_name or domain}"
+            "tool_reasoning": f"Get business ID for company: {company_name or domain}",
         }
         response = call_explorium_tool("match-business", input_data)
         if response and isinstance(response, list) and response[0].get("business_id"):
@@ -68,7 +68,10 @@ class ExploriumService:
         enriched_data = {}
         company_name = contact_data.get("organization")
         # Assuming emails is a list of dicts, get the first valid email
-        email = next((e.get("value") for e in contact_data.get("emails", []) if e.get("value")), None)
+        # email = next(
+        #     (e.get("value") for e in contact_data.get("emails", []) if e.get("value")),
+        #     None,
+        # )
         full_name = contact_data.get("full_name")
 
         business_id = None
@@ -79,35 +82,58 @@ class ExploriumService:
                 # Fetch and enrich business data
                 business_enrichment_input = {
                     "business_ids": [business_id],
-                    "enrichments": ["firmographics", "technographics", "workforce-trends"],
-                    "tool_reasoning": f"Enrich business data for {company_name}"
+                    "enrichments": [
+                        "firmographics",
+                        "technographics",
+                        "workforce-trends",
+                    ],
+                    "tool_reasoning": f"Enrich business data for {company_name}",
                 }
-                business_data = call_explorium_tool("enrich-business", business_enrichment_input)
-                if business_data and isinstance(business_data, list) and business_data[0]:
+                business_data = call_explorium_tool(
+                    "enrich-business", business_enrichment_input
+                )
+                if (
+                    business_data
+                    and isinstance(business_data, list)
+                    and business_data[0]
+                ):
                     enriched_data["explorium_business_data"] = business_data[0]
 
         # Match and enrich prospect data if full name and company are available
         if full_name and (company_name or business_id):
             prospect_match_input = {
-                "prospects_to_match": [{
-                    "full_name": full_name,
-                    "company_name": company_name,
-                    "business_id": business_id # Use business_id if available for better accuracy
-                }],
-                "tool_reasoning": f"Match prospect {full_name} at {company_name}"
+                "prospects_to_match": [
+                    {
+                        "full_name": full_name,
+                        "company_name": company_name,
+                        "business_id": business_id,  # Use business_id if available for better accuracy
+                    }
+                ],
+                "tool_reasoning": f"Match prospect {full_name} at {company_name}",
             }
-            prospect_match_response = call_explorium_tool("match-prospects", prospect_match_input)
-            if prospect_match_response and isinstance(prospect_match_response, list) and prospect_match_response[0].get("prospect_id"):
+            prospect_match_response = call_explorium_tool(
+                "match-prospects", prospect_match_input
+            )
+            if (
+                prospect_match_response
+                and isinstance(prospect_match_response, list)
+                and prospect_match_response[0].get("prospect_id")
+            ):
                 prospect_id = prospect_match_response[0]["prospect_id"]
                 enriched_data["explorium_prospect_id"] = prospect_id
                 prospect_enrichment_input = {
                     "prospect_ids": [prospect_id],
                     "enrichments": ["profiles", "contacts"],
-                    "tool_reasoning": f"Enrich prospect data for {full_name}"
+                    "tool_reasoning": f"Enrich prospect data for {full_name}",
                 }
-                prospect_data = call_explorium_tool("enrich-prospects", prospect_enrichment_input)
-                if prospect_data and isinstance(prospect_data, list) and prospect_data[0]:
+                prospect_data = call_explorium_tool(
+                    "enrich-prospects", prospect_enrichment_input
+                )
+                if (
+                    prospect_data
+                    and isinstance(prospect_data, list)
+                    and prospect_data[0]
+                ):
                     enriched_data["explorium_prospect_data"] = prospect_data[0]
 
         return enriched_data
-

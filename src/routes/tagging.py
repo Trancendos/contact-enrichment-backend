@@ -1,8 +1,9 @@
-from flask import Blueprint, request, jsonify, session, g
+from flask import Blueprint, request, jsonify, g
 from src.services.ai_tagging_service import AITaggingService
 from src.middleware.auth_middleware import login_required
 
 tagging_bp = Blueprint("tagging", __name__)
+
 
 @tagging_bp.route("/api/suggest_tags", methods=["POST"])
 @login_required
@@ -12,21 +13,19 @@ def suggest_tags():
     try:
         data = request.get_json()
         contact = data.get("contact")
-        
+
         if not contact:
             return jsonify({"success": False, "error": "No contact data provided"}), 400
-        
+
         ai_tagging_service = AITaggingService(g.db, user_id)
         suggested_tags = ai_tagging_service.suggest_tags(contact)
-        
-        return jsonify({
-            "success": True,
-            "suggested_tags": suggested_tags
-        })
-    
+
+        return jsonify({"success": True, "suggested_tags": suggested_tags})
+
     except Exception as e:
         print(f"Error in suggest_tags: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 @tagging_bp.route("/api/suggest_tags_batch", methods=["POST"])
 @login_required
@@ -36,19 +35,18 @@ def suggest_tags_batch():
     try:
         data = request.get_json()
         contacts = data.get("contacts")
-        
+
         if not contacts:
-            return jsonify({"success": False, "error": "No contacts data provided"}), 400
-        
+            return (
+                jsonify({"success": False, "error": "No contacts data provided"}),
+                400,
+            )
+
         ai_tagging_service = AITaggingService(g.db, user_id)
         results = ai_tagging_service.suggest_tags_batch(contacts)
-        
-        return jsonify({
-            "success": True,
-            "suggestions": results
-        })
-    
+
+        return jsonify({"success": True, "suggestions": results})
+
     except Exception as e:
         print(f"Error in suggest_tags_batch: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-
