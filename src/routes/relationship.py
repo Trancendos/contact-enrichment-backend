@@ -44,6 +44,7 @@ def create_relationship():
         g.db.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
 
+
 @relationship_bp.route("/relationships/<string:contact_id>", methods=["GET"])
 @login_required
 def get_relationships_for_contact(contact_id):

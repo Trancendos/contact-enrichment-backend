@@ -29,6 +29,7 @@ def create_contact():
     result = service.create_contact(contact_data, request)
     return jsonify(result)
 
+
 @contact_management_bp.route("/contacts/<contact_id>", methods=["PUT"])
 @login_required
 def update_contact(contact_id):
@@ -70,6 +71,7 @@ def delete_contact(contact_id):
     service = ContactManagementService(g.db, user_id)
     result = service.delete_contact(contact_id, request)
     return jsonify(result)
+
 
 @contact_management_bp.route("/contacts/split_phone", methods=["POST"])
 @login_required
@@ -113,6 +115,7 @@ def split_all():
     service = ContactManagementService(g.db, user_id)
     result = service.split_all(original_contact_id, request)
     return jsonify(result)
+
 
 @contact_management_bp.route("/contacts/merge", methods=["POST"])
 @login_required

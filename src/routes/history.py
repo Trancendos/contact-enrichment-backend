@@ -38,6 +38,7 @@ def get_contact_history(contact_id):
         print(f"Error in get_contact_history: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
 @history_bp.route("/api/history/user", methods=["GET"])
 @login_required
 def get_user_history():
@@ -95,6 +96,7 @@ def get_recent_actions():
         print(f"Error in get_recent_actions: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
 @history_bp.route("/api/history/undo/<int:history_id>", methods=["POST"])
 @login_required
 def undo_action(history_id):
@@ -121,6 +123,7 @@ def undo_action(history_id):
     except Exception as e:
         print(f"Error in undo_action: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 @history_bp.route("/api/backup/create", methods=["POST"])
 @login_required
@@ -157,6 +160,7 @@ def create_backup():
     except Exception as e:
         print(f"Error in create_backup: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 @history_bp.route("/api/backup/list", methods=["GET"])
 @login_required

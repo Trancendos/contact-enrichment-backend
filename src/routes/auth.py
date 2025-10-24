@@ -64,6 +64,7 @@ def register():
         }
     })
 
+
 @auth_bp.route("/login", methods=["POST"])
 def login():
     """
@@ -102,6 +103,7 @@ def login():
             "name": user.name
         }
     })
+
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
@@ -148,6 +150,7 @@ def get_current_user():
         }
     })
 
+
 @auth_bp.route("/oauth/google", methods=["POST"])
 def google_oauth():
     """
@@ -171,6 +174,7 @@ def google_oauth():
         "message": "Google OAuth not yet implemented. Use email/password login.",
         "note": "This requires Google OAuth client ID and secret configuration"
     })
+
 
 @auth_bp.route("/oauth/apple", methods=["POST"])
 def apple_oauth():

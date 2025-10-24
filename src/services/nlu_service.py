@@ -226,7 +226,7 @@ class ContactNLUService:
             text (str): The text to analyze.
 
         Returns:
-            str: The sentiment of the text ('positive', 'negative', or
+            str: The sentiment of the text ('positive', 'negative', 'or
                 'neutral').
         """
         positive_words = ['great', 'excellent', 'good', 'wonderful', 'amazing', 'fantastic', 'helpful', 'friendly', 'professional', 'reliable']

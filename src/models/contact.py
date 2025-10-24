@@ -39,12 +39,12 @@ class Contact(Base):
     last_name = Column(String, nullable=True)
     organization = Column(String, nullable=True)
     title = Column(String, nullable=True)
-    emails = Column(JSON, nullable=True) # List of dicts: [{value: "", type: ""}]
-    phones = Column(JSON, nullable=True) # List of dicts: [{value: "", type: ""}]
+    emails = Column(JSON, nullable=True)  # List of dicts: [{value: "", type: ""}]
+    phones = Column(JSON, nullable=True)  # List of dicts: [{value: "", type: ""}]
     notes = Column(Text, nullable=True)
-    tags = Column(JSON, nullable=True) # List of strings
-    related_names = Column(JSON, nullable=True) # For merged contacts
-    explorium_data = Column(JSON, nullable=True) # Enriched data from Explorium
+    tags = Column(JSON, nullable=True)  # List of strings
+    related_names = Column(JSON, nullable=True)  # For merged contacts
+    explorium_data = Column(JSON, nullable=True)  # Enriched data from Explorium
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 

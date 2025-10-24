@@ -42,6 +42,7 @@ def suggest_tags():
         print(f"Error in suggest_tags: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
 @tagging_bp.route("/api/suggest_tags_batch", methods=["POST"])
 @login_required
 def suggest_tags_batch():

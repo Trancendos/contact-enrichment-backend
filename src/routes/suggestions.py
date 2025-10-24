@@ -138,6 +138,7 @@ def generate_ai_suggestions(contacts, user_id, db_session):
     
     return suggestions
 
+
 @suggestions_bp.route("/analyze", methods=["POST"])
 def analyze_contacts():
     """
@@ -205,6 +206,7 @@ def list_suggestions():
         "success": True,
         "suggestions": [s.to_dict() for s in suggestions]
     })
+
 
 @suggestions_bp.route("/<int:suggestion_id>/approve", methods=["POST"])
 def approve_suggestion(suggestion_id):
@@ -280,6 +282,7 @@ def reject_suggestion(suggestion_id):
         "message": "Suggestion rejected and learned",
         "suggestion": suggestion.to_dict()
     })
+
 
 @suggestions_bp.route("/bulk_action", methods=["POST"])
 def bulk_action():

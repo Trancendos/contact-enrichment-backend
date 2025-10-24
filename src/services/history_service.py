@@ -142,13 +142,14 @@ class HistoryService:
     def undo_action(self, user_id, history_id):
         """
         Undo a specific action by restoring the before_data.
-        
+
         Args:
-            user_id: ID of the user
-            history_id: ID of the history entry to undo
-            
+            user_id (int): The ID of the user.
+            history_id (int): The ID of the history entry to undo.
+
         Returns:
-            Dict with success status and restored contact data
+            dict: A dictionary with the success status and the restored
+                contact data.
         """
         try:
             history_entry = self.db_session.query(ContactHistory).filter_by(
@@ -187,13 +188,14 @@ class HistoryService:
     def create_backup(self, user_id, contacts_data):
         """
         Create a backup of all contacts.
-        
+
         Args:
-            user_id: ID of the user
-            contacts_data: List of contact dictionaries
-            
+            user_id (int): The ID of the user.
+            contacts_data (list): A list of contact dictionaries.
+
         Returns:
-            ContactHistory object representing the backup
+            dict: A dictionary representation of the backup, or None if an
+                error occurred.
         """
         try:
             backup_entry = ContactHistory(
@@ -216,13 +218,14 @@ class HistoryService:
     def get_backups(self, user_id, limit=10):
         """
         Get all backups for a user.
-        
+
         Args:
-            user_id: ID of the user
-            limit: Maximum number of backups to return
-            
+            user_id (int): The ID of the user.
+            limit (int, optional): The maximum number of backups to return.
+                Defaults to 10.
+
         Returns:
-            List of backup history entries
+            list: A list of backup history dictionaries.
         """
         try:
             backups = self.db_session.query(ContactHistory).filter_by(

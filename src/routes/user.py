@@ -21,6 +21,7 @@ def get_users():
     users = g.db.query(User).all()
     return jsonify([user.to_dict() for user in users])
 
+
 @user_bp.route("/users", methods=["POST"])
 def create_user():
     """

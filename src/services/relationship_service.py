@@ -213,6 +213,12 @@ class RelationshipService:
 
 # Add to_dict() method to ContactRelationship model for serialization
 def _contact_relationship_to_dict(self):
+    """
+    Convert the ContactRelationship object to a dictionary.
+
+    Returns:
+        dict: A dictionary representation of the ContactRelationship object.
+    """
     return {
         "id": self.id,
         "user_id": self.user_id,
@@ -230,6 +236,12 @@ ContactRelationship.to_dict = _contact_relationship_to_dict
 # This is needed for history logging
 if not hasattr(Contact, 'to_dict'):
     def _contact_to_dict(self):
+        """
+        Convert the Contact object to a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the Contact object.
+        """
         return {
             "id": self.id,
             "user_id": self.user_id,
