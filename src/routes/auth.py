@@ -6,6 +6,7 @@ import secrets
 auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/register", methods=["POST"])
+@auth_bp.route("/signup", methods=["POST"])  # Alias for frontend compatibility
 def register():
     data = request.get_json()
     email = data.get("email")
