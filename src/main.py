@@ -28,7 +28,12 @@ from flask_cors import CORS
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'asdf#FGSgvasgf$5$WGT')
 
-CORS(app, supports_credentials=True) # Enable CORS for all routes with credentials
+# Enable CORS for all routes with credentials
+CORS(app, 
+     supports_credentials=True,
+     origins=["https://novasta-contact-splitter.vercel.app", "http://localhost:5173"],
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 # Database setup
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
