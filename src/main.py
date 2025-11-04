@@ -33,12 +33,18 @@ CORS(app, supports_credentials=True) # Enable CORS for all routes with credentia
 # Database setup
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-DATABASE_URL = f"{SUPABASE_URL}/rest/v1/?apikey={SUPABASE_KEY}"
-engine = create_engine(f"postgresql://postgres:{SUPABASE_KEY}@{SUPABASE_URL.replace('https://', '').split('.')[0]}.supabase.co:5432/postgres")
+
+# Use SQLite if Supabase credentials are not provided
+if SUPABASE_URL and SUPABASE_KEY:
+    engine = create_engine(f"postgresql://postgres:{SUPABASE_KEY}@{SUPABASE_URL.replace('https://', '').split('.')[0]}.supabase.co:5432/postgres")
+else:
+    # Use SQLite for local/free deployment
+    engine = create_engine('sqlite:///contact_management.db', connect_args={'check_same_thread': False})
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create tables
-# Base.metadata.create_all(bind=engine) # Supabase handles migrations
+Base.metadata.create_all(bind=engine)
 
 # Dependency to get DB session
 def get_db():
