@@ -28,6 +28,11 @@ from flask_cors import CORS
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'asdf#FGSgvasgf$5$WGT')
 
+# Session configuration for cross-domain cookies
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+
 # Enable CORS for all routes with credentials
 CORS(app, 
      supports_credentials=True,
