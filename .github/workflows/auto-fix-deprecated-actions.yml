@@ -1,0 +1,137 @@
+name: Auto-fix Deprecated Actions
+
+on:
+  schedule:
+    # Run weekly on Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-fix-deprecated-actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Check for deprecated actions
+        id: check
+        run: |
+          echo "Scanning for deprecated GitHub Actions..."
+          
+          # Create a list of deprecated actions to check
+          declare -A deprecated_actions=(
+            ["actions/cache@v1"]="actions/cache@v4"
+            ["actions/cache@v2"]="actions/cache@v4"
+            ["actions/cache@v3"]="actions/cache@v4"
+            ["actions/checkout@v1"]="actions/checkout@v4"
+            ["actions/checkout@v2"]="actions/checkout@v4"
+            ["actions/checkout@v3"]="actions/checkout@v4"
+            ["actions/setup-node@v1"]="actions/setup-node@v4"
+            ["actions/setup-node@v2"]="actions/setup-node@v4"
+            ["actions/setup-node@v3"]="actions/setup-node@v4"
+            ["actions/setup-python@v1"]="actions/setup-python@v5"
+            ["actions/setup-python@v2"]="actions/setup-python@v5"
+            ["actions/setup-python@v3"]="actions/setup-python@v5"
+            ["actions/setup-python@v4"]="actions/setup-python@v5"
+            ["actions/setup-java@v1"]="actions/setup-java@v4"
+            ["actions/setup-java@v2"]="actions/setup-java@v4"
+            ["actions/setup-java@v3"]="actions/setup-java@v4"
+            ["actions/upload-artifact@v1"]="actions/upload-artifact@v4"
+            ["actions/upload-artifact@v2"]="actions/upload-artifact@v4"
+            ["actions/upload-artifact@v3"]="actions/upload-artifact@v4"
+            ["actions/download-artifact@v1"]="actions/download-artifact@v4"
+            ["actions/download-artifact@v2"]="actions/download-artifact@v4"
+            ["actions/download-artifact@v3"]="actions/download-artifact@v4"
+          )
+          
+          found_deprecated=false
+          changes_made=false
+          
+          # Search workflow files for deprecated actions
+          for workflow in .github/workflows/*.yml .github/workflows/*.yaml; do
+            if [ -f "$workflow" ]; then
+              echo "Checking $workflow..."
+              for deprecated in "${!deprecated_actions[@]}"; do
+                if grep -q "$deprecated" "$workflow"; then
+                  echo "Found deprecated action: $deprecated in $workflow"
+                  found_deprecated=true
+                  
+                  # Replace deprecated action with the current version
+                  replacement="${deprecated_actions[$deprecated]}"
+                  sed -i "s|$deprecated|$replacement|g" "$workflow"
+                  changes_made=true
+                  echo "Replaced $deprecated with $replacement"
+                fi
+              done
+            fi
+          done
+          
+          if [ "$changes_made" = true ]; then
+            echo "changes_made=true" >> $GITHUB_OUTPUT
+            echo "CHANGES_MADE=true" >> $GITHUB_ENV
+          else
+            echo "changes_made=false" >> $GITHUB_OUTPUT
+            echo "CHANGES_MADE=false" >> $GITHUB_ENV
+            echo "No deprecated actions found or no changes needed."
+          fi
+
+      - name: Create Pull Request
+        if: env.CHANGES_MADE == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update deprecated GitHub Actions to latest versions'
+          branch: auto-fix/deprecated-actions-${{ github.run_number }}
+          delete-branch: true
+          title: 'chore: Update deprecated GitHub Actions to latest versions'
+          body: |
+            ## Auto-fix: Deprecated GitHub Actions Update
+            
+            This PR was automatically generated to update deprecated GitHub Actions to their latest versions.
+            
+            ### Changes Made
+            This automated workflow scanned `.github/workflows/**` and updated the following deprecated actions:
+            
+            - `actions/cache@v1` or `v2` or `v3` → `actions/cache@v4`
+            - `actions/checkout@v1` or `v2` or `v3` → `actions/checkout@v4`
+            - `actions/setup-node@v1` or `v2` or `v3` → `actions/setup-node@v4`
+            - `actions/setup-python@v1` or `v2` or `v3` or `v4` → `actions/setup-python@v5`
+            - `actions/setup-java@v1` or `v2` or `v3` → `actions/setup-java@v4`
+            - `actions/upload-artifact@v1` or `v2` or `v3` → `actions/upload-artifact@v4`
+            - `actions/download-artifact@v1` or `v2` or `v3` → `actions/download-artifact@v4`
+            
+            ### Why This Matters
+            - Deprecated actions may stop working in the future
+            - Newer versions include security fixes and performance improvements
+            - Keeps CI/CD pipeline up-to-date and reliable
+            
+            ### Review Checklist
+            - [ ] Review the changes to ensure compatibility with existing workflows
+            - [ ] Check that all workflow syntax is correct
+            - [ ] Verify that the updated actions work as expected
+            
+            This PR was created by the automated workflow: `.github/workflows/auto-fix-deprecated-actions.yml`
+            
+            ---
+            *This is an automated PR. If you have any concerns, please review the workflow file and adjust as needed.*
+          labels: |
+            automated
+            dependencies
+            github-actions
+          assignees: ''
+
+      - name: No changes needed
+        if: env.CHANGES_MADE != 'true'
+        run: |
+          echo "✅ No deprecated actions found. All GitHub Actions are up to date!"
