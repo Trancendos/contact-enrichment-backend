@@ -2,6 +2,7 @@ services:
   - type: web
     name: novasta-contact-backend
     env: python
+    rootDir: .
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --workers 4 --bind 0.0.0.0:10000 --log-level debug src.main:app
     envVars:
