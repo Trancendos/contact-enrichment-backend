@@ -105,3 +105,10 @@ if __name__ == '__main__':
     is_debug = os.environ.get('ENVIRONMENT', 'development') != 'production'
     app.run(host='0.0.0.0', port=5000, debug=is_debug)
 
+
+
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "ok"}), 200
+

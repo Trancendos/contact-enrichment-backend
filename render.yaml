@@ -3,7 +3,7 @@ services:
     name: novasta-contact-backend
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn src.main:app
+    startCommand: gunicorn --workers 4 --bind 0.0.0.0:10000 --log-level debug src.main:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
