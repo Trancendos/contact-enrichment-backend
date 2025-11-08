@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 # DON\'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, send_from_directory, session, g
+from flask import Flask, send_from_directory, session, g, jsonify
 from src.models.base import Base
 from src.models.user import User
 from src.models.contact import Contact # Assuming Contact model exists or will be created
