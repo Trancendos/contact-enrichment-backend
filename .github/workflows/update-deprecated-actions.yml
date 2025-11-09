@@ -53,8 +53,8 @@ jobs:
           ["google-github-actions/setup-gcloud@v1"]="google-github-actions/setup-gcloud@v2"
         )
         
-        # Find all workflow files
-        workflow_files=$(find .github/workflows -name "*.yml" -o -name "*.yaml")
+        # Find all workflow files (excluding this workflow to avoid self-updates)
+        workflow_files=$(find .github/workflows -name "*.yml" -o -name "*.yaml" | grep -v "update-deprecated-actions.yml" || true)
         
         if [ -z "$workflow_files" ]; then
           echo "No workflow files found"
