@@ -69,7 +69,9 @@ jobs:
                   
                   # Replace deprecated action with the current version
                   replacement="${deprecated_actions[$deprecated]}"
-                  sed -i "s|$deprecated|$replacement|g" "$workflow"
+                  # Escape $deprecated for literal matching in sed
+                  escaped_deprecated=$(printf '%s\n' "$deprecated" | sed 's/[.[\*^$(){}?+|]/\\&/g')
+                  sed -i "s|uses:[[:space:]]*$escaped_deprecated|uses: $replacement|g" "$workflow"
                   changes_made=true
                   echo "Replaced $deprecated with $replacement"
                 fi
