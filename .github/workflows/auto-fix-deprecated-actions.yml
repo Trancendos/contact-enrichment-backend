@@ -59,6 +59,7 @@ jobs:
           changes_made=false
           
           # Search workflow files for deprecated actions
+          shopt -s nullglob
           for workflow in .github/workflows/*.yml .github/workflows/*.yaml; do
             if [ -f "$workflow" ]; then
               echo "Checking $workflow..."
