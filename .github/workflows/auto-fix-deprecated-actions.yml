@@ -63,7 +63,7 @@ jobs:
             if [ -f "$workflow" ]; then
               echo "Checking $workflow..."
               for deprecated in "${!deprecated_actions[@]}"; do
-                if grep -q "$deprecated" "$workflow"; then
+                if grep -Eq "uses:\s*${deprecated}" "$workflow"; then
                   echo "Found deprecated action: $deprecated in $workflow"
                   found_deprecated=true
                   
