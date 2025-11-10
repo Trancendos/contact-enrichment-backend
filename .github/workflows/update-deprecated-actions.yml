@@ -77,7 +77,7 @@ jobs:
             if grep -q "$old_action" "$file"; then
               echo "  Found deprecated action: $old_action"
               echo "  Replacing with: $new_action"
-              sed -i "s|$old_action|$new_action|g" "$file"
+              sed -i "/uses:/s|$old_action|$new_action|g" "$file"
               file_modified=true
               changes_made=true
             fi
