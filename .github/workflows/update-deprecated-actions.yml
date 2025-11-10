@@ -84,7 +84,7 @@ jobs:
           done
           
           if [ "$file_modified" = true ]; then
-            updated_files="${updated_files}\n- ${file}"
+            updated_files="${updated_files}$'\n'- ${file}"
           fi
         done
         
