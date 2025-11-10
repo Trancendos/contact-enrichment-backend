@@ -89,8 +89,8 @@ jobs:
         # Set output
         if [ "$changes_made" = true ]; then
           echo "has_changes=true" >> $GITHUB_OUTPUT
-          echo -e "updated_files<<EOF" >> $GITHUB_OUTPUT
-          echo -e "$updated_files" >> $GITHUB_OUTPUT
+          echo "updated_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$updated_files" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         else
           echo "No deprecated actions found"
