@@ -72,7 +72,7 @@ jobs:
           for old_action in "${!replacements[@]}"; do
             new_action="${replacements[$old_action]}"
             
-            if grep -q "$old_action" "$file"; then
+            if grep -q "uses:.*$old_action" "$file"; then
               echo "  Found deprecated action: $old_action"
               echo "  Replacing with: $new_action"
               sed -i "/uses:/s|$old_action|$new_action|g" "$file"
